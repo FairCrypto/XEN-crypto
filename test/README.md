@@ -1,9 +1,9 @@
 
 ## Installation
 
-Clone repo`git clone ...`
+Clone repo`git clone git@github.com:FutureCapitalNft/zero-value-token.git`
 
-`cd ...`
+`cd zero-value-token`
 
 Install dependencies `npm i`
 
