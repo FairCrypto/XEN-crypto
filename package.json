@@ -1,0 +1,28 @@
+{
+  "name": "zero-value-token",
+  "version": "0.1.0",
+  "description": "Zero Value Token",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "truffle compile -all",
+    "test-ganache-clean": "rm -rf ./build/contracts && export ETH_NET=development && ./run-ganache.sh && truffle compile --all && truffle test --network development && ./stop-ganache.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ZVT",
+    "Zero",
+    "Value",
+    "Token",
+    "ERC-20"
+  ],
+  "author": "J.Levin, L.Belyaev",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^2.0.13",
+    "dotenv": "^16.0.1",
+    "truffle-assertions": "^0.9.2"
+  }
+}
