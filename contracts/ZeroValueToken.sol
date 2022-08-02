@@ -27,7 +27,7 @@ contract ZeroValueToken is
     uint256 constant public GENESIS_STAKE_ID = 21;
 
     uint256 public nextStakeId = GENESIS_STAKE_ID;
-    uint256 public totalStakes;
+    uint256 public activeStakes;
     // user address => stake info
     mapping(address => StakeInfo) public userStakes;
 
@@ -43,7 +43,7 @@ contract ZeroValueToken is
             rank: nextStakeId
         });
 
-        totalStakes++;
+        activeStakes++;
         emit Staked(_msgSender(), term, nextStakeId++);
     }
 
@@ -57,7 +57,7 @@ contract ZeroValueToken is
         uint256 rewardAmount = (nextStakeId - userStake.rank) * userStake.term;
         _mint(_msgSender(), rewardAmount);
         delete userStakes[_msgSender()];
-        totalStakes--;
+        activeStakes--;
         emit Withdrawn(_msgSender(),  rewardAmount);
     }
 
