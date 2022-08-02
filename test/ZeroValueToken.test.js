@@ -58,7 +58,7 @@ contract("Zero Value Token", async accounts => {
                     (event) => {
                         return event.user === accounts[1]
                             && BigInt(bn2hexStr(event.term)) === BigInt(term)
-                            && BigInt(bn2hexStr(event.stakeId)) === BigInt(expectedStakeId)
+                            && BigInt(bn2hexStr(event.rank)) === BigInt(expectedStakeId)
                     }))
                 .catch(console.error)
         })
@@ -69,14 +69,13 @@ contract("Zero Value Token", async accounts => {
         await advanceBlockAtTime(web3, Math.round((Date.now() / 1000) + 3600 * 24 + 10))
         const expectedRewardAmount = (expectedStakeId - (expectedStakeId - 1)) * term
         await assert.doesNotReject(() => {
-            return token.withdraw(expectedStakeId, {from: accounts[1]})
+            return token.withdraw({from: accounts[1]})
                 .then(result => {
                     truffleAssert.eventEmitted(
                         result,
                         'Withdrawn',
                         (event) => {
                             return event.user === accounts[1]
-                                && BigInt(bn2hexStr(event.stakeId)) === BigInt(expectedStakeId)
                                 && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount)
                         })
                     truffleAssert.eventEmitted(
