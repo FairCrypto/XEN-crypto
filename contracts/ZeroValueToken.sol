@@ -10,12 +10,14 @@ import "./interfaces/IStakingToken.sol";
 
 contract ZeroValueToken is
     Context,
-    Ownable,
-    Pausable,
-    ReentrancyGuard,
+    Ownable,                // TODO: remove if not needed ???
+    Pausable,               // TODO: remove if not needed ???
+    ReentrancyGuard,        // TODO: remove if not needed ???
     IStakingToken,
     ERC20("Delayed Gratification Coin", "DGC")
 {
+
+    // INTERNAL TYPE TO DESCRIBE A STAKE
 
     struct StakeInfo {
         address user;
@@ -27,12 +29,16 @@ contract ZeroValueToken is
     uint256 constant public SECONDS_IN_DAY = 3600 * 24;
     uint256 constant public GENESIS_RANK = 21;
 
+    // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
+
     uint256 public globalRank = GENESIS_RANK;
     uint256 public activeStakes;
     // user address => stake info
     mapping(address => StakeInfo) public userStakes;
     // rank => stake info
     mapping(uint256 => StakeInfo) public rankStakes;
+
+    // INTERNAL METHODS
 
     function _log2(uint256 x)
         private
@@ -69,13 +75,26 @@ contract ZeroValueToken is
         }
     }
 
+    // PUBLIC CONVENIENCE GETTER
+
+    function getUserStake()
+        external
+        view
+        returns (StakeInfo memory)
+    {
+        return userStakes[_msgSender()];
+    }
+
+    // PUBLIC STATE-CHANGING METHODS
+
     function stake(uint256 term)
         external
     {
         require(term > 0, 'Maturity shall be in the future');
         require(userStakes[_msgSender()].rank == 0, 'Stake exists');
 
-         StakeInfo memory stakeInfo = StakeInfo({
+        // create and store new stakeInfo
+        StakeInfo memory stakeInfo = StakeInfo({
             user: _msgSender(),
             term: term,
             maturityTs: block.timestamp + term * SECONDS_IN_DAY,
@@ -83,9 +102,9 @@ contract ZeroValueToken is
         });
         userStakes[_msgSender()] = stakeInfo;
         rankStakes[globalRank] = stakeInfo;
-
         activeStakes++;
-        emit Staked(_msgSender(), term, globalRank++);
+        globalRank++;
+        emit Staked(_msgSender(), term, globalRank);
     }
 
     function withdraw()
@@ -95,9 +114,12 @@ contract ZeroValueToken is
         require(userStake.rank > 0, 'Mo stake exists');
         require(userStake.maturityTs <= block.timestamp, 'Stake maturity not reached');
 
+        // calculate reward
         uint256 rankDelta = globalRank - userStake.rank;
         uint256 rewardAmount = _log2(rankDelta * rankDelta * rankDelta) * 1000 * userStake.term;
+        // mint reward tokens
         _mint(_msgSender(), rewardAmount);
+        // remove stake info
         delete userStakes[_msgSender()];
         delete rankStakes[userStake.rank];
         activeStakes--;
