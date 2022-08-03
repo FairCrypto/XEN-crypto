@@ -29,8 +29,9 @@ const advanceBlockAtTime = (web3, time) => {
 contract("Zero Value Token", async accounts => {
 
     let token
-    let term = 1
-    let expectedStakeId = 21
+    let term = 2
+    const genesisRank = 21
+    let expectedStakeId = genesisRank
 
     before(async () => {
         try {
@@ -46,7 +47,7 @@ contract("Zero Value Token", async accounts => {
     })
 
     it("Should start stake IDs (ranks) with number 21", async () => {
-        assert.ok(await token.nextStakeId().then(_ => _.toNumber()) === expectedStakeId)
+        assert.ok(await token.globalRank().then(_ => _.toNumber()) === expectedStakeId)
     })
 
     it("Should allow to stake with initial ID (rank) having #21", async () => {
@@ -62,12 +63,31 @@ contract("Zero Value Token", async accounts => {
                     }))
                 .catch(console.error)
         })
+        expectedStakeId++
     })
+
+   it("Should allow to stake with next ID (rank) having #22", async () => {
+        await assert.doesNotReject(() => {
+            return token.stake(term, {from: accounts[2]})
+                .then(result => truffleAssert.eventEmitted(
+                    result,
+                    'Staked',
+                    (event) => {
+                        return event.user === accounts[2]
+                            && BigInt(bn2hexStr(event.term)) === BigInt(term)
+                            && BigInt(bn2hexStr(event.rank)) === BigInt(expectedStakeId)
+                    }))
+                .catch(console.error)
+        })
+       expectedStakeId++
+   })
 
     it("Should allow to withdraw stake upon maturity with DGC minted", async () => {
         // rewardAmount = (nextStakeId - stakeId) * stakeTerms[_msgSender() = (22 - 21) * 2
-        await advanceBlockAtTime(web3, Math.round((Date.now() / 1000) + 3600 * 24 + 10))
-        const expectedRewardAmount = (expectedStakeId - (expectedStakeId - 1)) * term
+        await advanceBlockAtTime(web3, Math.round((Date.now() / 1000) + (3600 * 24) * term + 10))
+        const globalRank = await token.globalRank().then(_ => _.toNumber())
+        const rankDelta = (globalRank - genesisRank)
+        const expectedRewardAmount = Math.round(Math.log2(rankDelta * rankDelta * rankDelta) * 1000 * term)
         await assert.doesNotReject(() => {
             return token.withdraw({from: accounts[1]})
                 .then(result => {
@@ -89,6 +109,7 @@ contract("Zero Value Token", async accounts => {
                 })
                 .catch(console.log)
         })
+        console.log(expectedRewardAmount, await token.totalSupply().then(_ => _.toNumber()))
     })
 
 })
