@@ -118,7 +118,7 @@ contract ZeroValueToken is
 
         // calculate reward
         uint256 rankDelta = globalRank - userStake.rank;
-        uint256 rewardAmount = _log2(rankDelta * rankDelta * rankDelta) * 1000 * userStake.term;
+        uint256 rewardAmount = _log2(rankDelta) * 3000 * userStake.term;
         // mint reward tokens
         _mint(_msgSender(), rewardAmount);
         // remove stake info
