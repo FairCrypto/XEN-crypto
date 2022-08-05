@@ -27,6 +27,7 @@ contract ZeroValueToken is
     }
 
     uint256 constant public SECONDS_IN_DAY = 3600 * 24;
+    uint256 constant public SECONDS_IN_WEEK = 3600 * 24 * 7;
     uint256 constant public GENESIS_RANK = 21;
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
@@ -113,6 +114,7 @@ contract ZeroValueToken is
         StakeInfo memory userStake = userStakes[_msgSender()];
         require(userStake.rank > 0, 'Mo stake exists');
         require(userStake.maturityTs <= block.timestamp, 'Stake maturity not reached');
+        require(userStake.maturityTs + SECONDS_IN_WEEK > block.timestamp, 'Stake withdrawal window passed');
 
         // calculate reward
         uint256 rankDelta = globalRank - userStake.rank;
