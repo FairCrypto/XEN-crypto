@@ -104,8 +104,7 @@ contract ZeroValueToken is
         userStakes[_msgSender()] = stakeInfo;
         rankStakes[globalRank] = stakeInfo;
         activeStakes++;
-        globalRank++;
-        emit Staked(_msgSender(), term, globalRank);
+        emit Staked(_msgSender(), term, globalRank++);
     }
 
     function withdraw()
