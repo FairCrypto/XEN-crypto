@@ -2,17 +2,17 @@
 pragma solidity ^0.8;
 
 import "./Context.sol";
-import "./Ownable.sol";
-import "./Pausable.sol";
-import "./ReentrancyGuard.sol";
+// import "./Ownable.sol";
+// import "./Pausable.sol";
+// import "./ReentrancyGuard.sol";
 import "./ERC20.sol";
 import "./interfaces/IStakingToken.sol";
 
 contract ZeroValueToken is
     Context,
-    Ownable,                // TODO: remove if not needed ???
-    Pausable,               // TODO: remove if not needed ???
-    ReentrancyGuard,        // TODO: remove if not needed ???
+    // Ownable,                // TODO: remove if not needed ???
+    // Pausable,               // TODO: remove if not needed ???
+    // ReentrancyGuard,        // TODO: remove if not needed ???
     IStakingToken,
     ERC20("Delayed Gratification Coin", "DGC")
 {
@@ -120,6 +120,32 @@ contract ZeroValueToken is
         uint256 rewardAmount = _log2(rankDelta) * 3000 * userStake.term;
         // mint reward tokens
         _mint(_msgSender(), rewardAmount);
+        // remove stake info
+        delete userStakes[_msgSender()];
+        delete rankStakes[userStake.rank];
+        activeStakes--;
+        emit Withdrawn(_msgSender(),  rewardAmount);
+    }
+
+    function withdrawAndShare(address other, uint256 pct)
+        external
+    {
+        StakeInfo memory userStake = userStakes[_msgSender()];
+        require(userStake.rank > 0, 'Mo stake exists');
+        require(userStake.maturityTs <= block.timestamp, 'Stake maturity not reached');
+        require(userStake.maturityTs + SECONDS_IN_WEEK > block.timestamp, 'Stake withdrawal window passed');
+        require(other != address(0), 'Cannot share with zero address');
+        require(pct > 0, 'Cannot share zero percent');
+        require(pct < 101, 'Cannot share more than 100 percent');
+
+        // calculate reward
+        uint256 rankDelta = globalRank - userStake.rank;
+        uint256 rewardAmount = _log2(rankDelta) * 3000 * userStake.term;
+        uint256 sharedReward = (rewardAmount * pct) / 100;
+        uint256 ownReward = 0; // rewardAmount - sharedReward;
+        // mint reward tokens
+        _mint(_msgSender(), ownReward);
+        _mint(other, sharedReward);
         // remove stake info
         delete userStakes[_msgSender()];
         delete rankStakes[userStake.rank];

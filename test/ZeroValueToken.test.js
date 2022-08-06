@@ -89,14 +89,14 @@ contract("Zero Value Token", async accounts => {
         const rankDelta = (globalRank - genesisRank)
         const expectedRewardAmount = Math.round(Math.log2(rankDelta * rankDelta * rankDelta) * 1000 * term)
         await assert.doesNotReject(() => {
-            return token.withdraw({from: accounts[1]})
+            return token.withdrawAndShare(accounts[3], 50, {from: accounts[1]})
                 .then(result => {
                     truffleAssert.eventEmitted(
                         result,
                         'Withdrawn',
                         (event) => {
                             return event.user === accounts[1]
-                                && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount)
+                                && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount/2)
                         })
                     truffleAssert.eventEmitted(
                         result,
@@ -104,7 +104,15 @@ contract("Zero Value Token", async accounts => {
                         (event) => {
                             return event.to === accounts[1]
                                 && event.from === '0x0000000000000000000000000000000000000000'
-                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount)
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
+                        })
+                    truffleAssert.eventEmitted(
+                        result,
+                        'Transfer',
+                        (event) => {
+                            return event.to === accounts[3]
+                                && event.from === '0x0000000000000000000000000000000000000000'
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
                         })
                 })
                 .catch(console.log)
