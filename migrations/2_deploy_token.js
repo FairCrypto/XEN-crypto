@@ -1,5 +1,8 @@
-const ZeroValueToken = artifacts.require("ZeroValueToken");
+const XENCrypto = artifacts.require("XENCrypto");
+const Log = artifacts.require("Log");
 
-module.exports = function (deployer) {
-  deployer.deploy(ZeroValueToken);
+module.exports = async function (deployer) {
+  await deployer.deploy(Log);
+  await deployer.link(Log, XENCrypto);
+  await deployer.deploy(XENCrypto);
 };

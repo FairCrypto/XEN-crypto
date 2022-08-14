@@ -1,7 +1,7 @@
 {
-  "name": "zero-value-token",
+  "name": "xen-crypto",
   "version": "0.1.0",
-  "description": "Zero Value Token",
+  "description": "XEN Crypto",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
@@ -12,10 +12,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "ZVT",
-    "Zero",
-    "Value",
-    "Token",
+    "Fair Crypto Foundation",
+    "XEN",
+    "XEN Crypto",
+    "Ethereum",
     "ERC-20"
   ],
   "author": "J.Levin, L.Belyaev",
