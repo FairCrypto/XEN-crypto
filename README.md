@@ -1,9 +1,9 @@
 
 ## Installation
 
-Clone repo`git clone git@github.com:FutureCapitalNft/zero-value-token.git`
+Clone repo`git clone git@github.com:FutureCapitalNft/XEN-crypto.git`
 
-`cd zero-value-token`
+`cd XEN-crypto`
 
 Install dependencies `npm i`
 
