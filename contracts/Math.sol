@@ -3,6 +3,10 @@ pragma solidity ^0.8;
 
 library Math {
 
+    /*
+        Source: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
+        Author: https://ethereum.stackexchange.com/users/131/tjaden-hess
+    */
     function log2(uint256 x)
         external
         pure

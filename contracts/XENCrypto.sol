@@ -25,9 +25,10 @@ contract XENCrypto is
     uint256 constant public SECONDS_IN_WEEK = 3_600 * 24 * 7;
     uint256 constant public GENESIS_RANK = 21;
     uint256 constant public MIN_TERM = 1 * SECONDS_IN_DAY;
-    uint256 constant public MAX_TERM_START = 100 * SECONDS_IN_DAY;
-    uint256 constant public MAX_TERM_END = 1_000 * SECONDS_IN_DAY;
-    uint256 constant public TERM_AMPLIFIER = 25;
+    uint256 constant public MAX_TERM_START = 100 * SECONDS_IN_DAY; // TODO: 128 ???
+    uint256 constant public MAX_TERM_END = 1_000 * SECONDS_IN_DAY; // TODO: 1024 ???
+    uint256 constant public TERM_AMPLIFIER = 15;
+    uint256 constant public TERM_AMPLIFIER_THRESHOLD = 5_000;
     uint256 constant public RANK_AMPLIFIER = 3_000;
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
@@ -46,9 +47,11 @@ contract XENCrypto is
         private
     {
         activeStakes++;
-        uint256 newMax = MIN_TERM + activeStakes.log2() * TERM_AMPLIFIER;
-        if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
-            currentMaxTerm = newMax;
+        if (activeStakes > TERM_AMPLIFIER_THRESHOLD) {
+            uint256 newMax = MIN_TERM + activeStakes.log2() * TERM_AMPLIFIER;
+            if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
+                currentMaxTerm = newMax;
+            }
         }
     }
 
@@ -145,8 +148,6 @@ contract XENCrypto is
         StakeInfo memory userStake = userStakes[_msgSender()];
         require(userStake.rank > 0, 'Mo stake exists');
         require(block.timestamp > userStake.maturityTs, 'Stake maturity not reached');
-        // TODO: replace with a decreasing window
-        require(userStake.maturityTs + SECONDS_IN_WEEK > block.timestamp, 'Stake withdrawal window passed');
         require(other != address(0), 'Cannot share with zero address');
         require(pct > 0, 'Cannot share zero percent');
         require(pct < 101, 'Cannot share 100+ percent');
