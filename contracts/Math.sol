@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8;
 
-library Log {
+library Math {
 
     function log2(uint256 x)
         external
@@ -36,6 +36,24 @@ library Log {
             y := div(mload(add(m,sub(255,a))), shift)
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
+    }
+
+    function min(uint256 a, uint256 b)
+        external
+        pure
+        returns (uint256)
+    {
+        if (a > b) return b;
+        return a;
+    }
+
+    function max(uint256 a, uint256 b)
+        external
+        pure
+        returns (uint256)
+    {
+        if (a > b) return a;
+        return b;
     }
 
 }

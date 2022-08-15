@@ -2,7 +2,7 @@
 pragma solidity ^0.8;
 
 import "./Context.sol";
-import "./Log.sol";
+import "./Math.sol";
 import "./ERC20.sol";
 import "./interfaces/IStakingToken.sol";
 
@@ -11,6 +11,7 @@ contract XENCrypto is
     IStakingToken,
     ERC20("XEN Crypto", "XEN")
 {
+    using Math for uint256;
 
     // INTERNAL TYPE TO DESCRIBE A STAKE
     struct StakeInfo {
@@ -44,19 +45,50 @@ contract XENCrypto is
     function _addStakeAndAdjustMaxTerm()
         private
     {
-        uint256 newMax = MIN_TERM + Log.log2(++activeStakes) * TERM_AMPLIFIER;
+        activeStakes++;
+        uint256 newMax = MIN_TERM + activeStakes.log2() * TERM_AMPLIFIER;
         if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
             currentMaxTerm = newMax;
         }
     }
 
-    function _calculateReward(uint256 userRank, uint256 userTerm)
+    function _withdrawalWindow(uint256 userTerm)
+        private
+        pure
+        returns(uint256)
+    {
+        return (userTerm * SECONDS_IN_DAY).log2();
+    }
+
+    function _penalty(uint256 window, uint256 secsLate)
+        private
+        pure
+        returns(uint256)
+    {
+        // =MIN(2^(F4*8/window),100)
+        uint256 daysLate = secsLate / SECONDS_IN_DAY;
+        uint256 pwr = daysLate * 8 / window;
+        return Math.min(uint256(1) << pwr, 128) - 1;
+    }
+
+    function _calculateReward(uint256 userRank, uint256 userTerm, uint256 maturityTs)
         private
         view
         returns(uint256)
     {
+        uint256 secsLate = block.timestamp - maturityTs;
+        uint256 penalty = _penalty(_withdrawalWindow(userTerm), secsLate);
         uint256 rankDelta = globalRank - userRank;
-        return Log.log2(rankDelta) * RANK_AMPLIFIER * userTerm;
+        uint256 reward = rankDelta.log2() * RANK_AMPLIFIER * userTerm;
+        return (reward * (128 - penalty)) >> 7;
+    }
+
+    function _cleanUpStake(uint256 rank)
+        private
+    {
+        delete userStakes[_msgSender()];
+        delete rankStakes[rank];
+        activeStakes--;
     }
 
     // PUBLIC CONVENIENCE GETTER
@@ -98,16 +130,12 @@ contract XENCrypto is
         StakeInfo memory userStake = userStakes[_msgSender()];
         require(userStake.rank > 0, 'Mo stake exists');
         require(block.timestamp > userStake.maturityTs, 'Stake maturity not reached');
-        // TODO: replace with a decreasing window
-        require(userStake.maturityTs + SECONDS_IN_WEEK > block.timestamp, 'Stake withdrawal window passed');
 
         // calculate reward and mint tokens
-        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term);
+        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
         _mint(_msgSender(), rewardAmount);
-        // remove stake info
-        delete userStakes[_msgSender()];
-        delete rankStakes[userStake.rank];
-        activeStakes--;
+
+        _cleanUpStake(userStake.rank);
         emit Withdrawn(_msgSender(),  rewardAmount);
     }
 
@@ -124,7 +152,7 @@ contract XENCrypto is
         require(pct < 101, 'Cannot share 100+ percent');
 
         // calculate reward
-        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term);
+        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
         uint256 sharedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - sharedReward;
 
@@ -132,11 +160,7 @@ contract XENCrypto is
         _mint(_msgSender(), ownReward);
         _mint(other, sharedReward);
 
-        // remove stake info
-        delete userStakes[_msgSender()];
-        delete rankStakes[userStake.rank];
-
-        activeStakes--;
+        _cleanUpStake(userStake.rank);
         emit Withdrawn(_msgSender(),  rewardAmount);
     }
 
