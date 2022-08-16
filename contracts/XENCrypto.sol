@@ -21,6 +21,8 @@ contract XENCrypto is
         uint256 rank;
     }
 
+    // PUBLIC CONSTANTS
+
     uint256 constant public SECONDS_IN_DAY = 3_600 * 24;
     uint256 constant public SECONDS_IN_WEEK = 3_600 * 24 * 7;
     uint256 constant public GENESIS_RANK = 21;
@@ -41,8 +43,12 @@ contract XENCrypto is
     // rank => stake info
     mapping(uint256 => StakeInfo) public rankStakes;
 
-    // PRIVATE
+    // PRIVATE METHODS
 
+    /**
+     * @dev increases Active Stakes, recalculates and saves new MaxTerm
+     *      (if over TERM_AMPLIFIER_THRESHOLD)
+     */
     function _addStakeAndAdjustMaxTerm()
         private
     {
@@ -55,6 +61,9 @@ contract XENCrypto is
         }
     }
 
+    /**
+    * @dev calculates Stake Withdrawal Window based on Stake Term
+    */
     function _withdrawalWindow(uint256 userTerm)
         private
         pure
@@ -63,6 +72,9 @@ contract XENCrypto is
         return (userTerm * SECONDS_IN_DAY).log2();
     }
 
+    /**
+    * @dev calculates Withdrawal Penalty (on 128-point scale) depending on lateness
+    */
     function _penalty(uint256 window, uint256 secsLate)
         private
         pure
@@ -74,6 +86,9 @@ contract XENCrypto is
         return Math.min(uint256(1) << pwr, 128) - 1;
     }
 
+    /**
+    * @dev calculates net Stake Reward (adjusted for Penalty)
+    */
     function _calculateReward(uint256 userRank, uint256 userTerm, uint256 maturityTs)
         private
         view
@@ -86,6 +101,9 @@ contract XENCrypto is
         return (reward * (128 - penalty)) >> 7;
     }
 
+    /**
+    * @dev cleans up Stake storage (gets some Gas credit;))
+    */
     function _cleanUpStake(uint256 rank)
         private
     {
@@ -96,6 +114,9 @@ contract XENCrypto is
 
     // PUBLIC CONVENIENCE GETTER
 
+    /**
+    * @dev returns Stake object associated with User account address
+    */
     function getUserStake()
         external
         view
@@ -106,6 +127,9 @@ contract XENCrypto is
 
     // PUBLIC STATE-CHANGING METHODS
 
+    /**
+    * @dev accepts User Stake provided all checks pass (incl. no current Stake)
+    */
     function stake(uint256 term)
         external
     {
@@ -127,6 +151,9 @@ contract XENCrypto is
         emit Staked(_msgSender(), term, globalRank++);
     }
 
+    /**
+    * @dev ends Stake upon maturity (and within permitted Withdrawal time Window), mints XEN coins
+    */
     function withdraw()
         external
     {
@@ -142,6 +169,10 @@ contract XENCrypto is
         emit Withdrawn(_msgSender(),  rewardAmount);
     }
 
+    /**
+    * @dev  ends Stake upon maturity (and within permitted Withdrawal time Window)
+    *       mints XEN coins and splits them between User and designated other address
+    */
     function withdrawAndShare(address other, uint256 pct)
         external
     {
