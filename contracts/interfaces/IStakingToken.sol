@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.10;
 
 interface IStakingToken {
 
@@ -7,7 +7,7 @@ interface IStakingToken {
 
     event Withdrawn(address indexed user, uint256 rewardAmount);
 
-    function stake(uint256 maturityTs) external;
+    function stake(uint256 term) external;
 
     function withdraw() external;
 

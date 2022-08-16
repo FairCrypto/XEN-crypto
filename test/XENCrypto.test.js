@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 const assert = require('assert')
 //const ethers = require('ethers')
 const truffleAssert = require('truffle-assertions')

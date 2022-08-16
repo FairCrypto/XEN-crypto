@@ -8,8 +8,7 @@
   },
   "scripts": {
     "compile": "truffle compile -all",
-    "test-ganache-clean": "rm -rf ./build/contracts && export ETH_NET=development && ./run-ganache.sh && truffle compile --all && truffle test --network development && ./stop-ganache.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test-ganache-clean": "rm -rf ./build/contracts && export ETH_NET=development && ./run-ganache.sh && truffle compile --all && truffle test --network development && ./stop-ganache.sh"
   },
   "keywords": [
     "Fair Crypto Foundation",
@@ -19,7 +18,7 @@
     "ERC-20"
   ],
   "author": "J.Levin, L.Belyaev",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "@truffle/hdwallet-provider": "^2.0.13",
     "dotenv": "^16.0.1",
