@@ -1,7 +1,7 @@
 
 ## Installation
 
-Clone repo`git clone git@github.com:FutureCapitalNft/XEN-crypto.git`
+Clone repo`git clone git@github.com:FairCrypto/XEN-crypto.git`
 
 `cd XEN-crypto`
 
