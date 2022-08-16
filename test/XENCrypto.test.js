@@ -28,10 +28,11 @@ const advanceBlockAtTime = (web3, time) => {
     });
 };
 
-contract("XEN Crypto", async accounts => {
+contract("XEN Crypto (Rank Claiming)", async accounts => {
 
     let token
     let term = 2
+    let controlTs
     const genesisRank = 21
     let expectedStakeId = genesisRank
 
@@ -54,10 +55,10 @@ contract("XEN Crypto", async accounts => {
 
     it("Should allow to stake with initial ID (rank) having #21", async () => {
         await assert.doesNotReject(() => {
-            return token.stake(term, {from: accounts[1]})
+            return token.claimRank(term, {from: accounts[1]})
                 .then(result => truffleAssert.eventEmitted(
                     result,
-                    'Staked',
+                    'RankClaimed',
                     (event) => {
                         return event.user === accounts[1]
                             && BigInt(bn2hexStr(event.term)) === BigInt(term)
@@ -68,12 +69,18 @@ contract("XEN Crypto", async accounts => {
         expectedStakeId++
     })
 
-   it("Should allow to stake with next ID (rank) having #22", async () => {
-        await assert.doesNotReject(() => {
-            return token.stake(term, {from: accounts[2]})
+    it("Should reject to add another stake for the same account", async () => {
+        await assert.rejects(() => token.claimRank(term * 2, {from: accounts[1]}));
+    })
+
+    it("Should allow to stake with next ID (rank) having #22", async () => {
+       controlTs = Date.now()
+       await advanceBlockAtTime(web3, Math.round((controlTs / 1000) + ((3600 * 24) * term / 2)))
+       await assert.doesNotReject(() => {
+            return token.claimRank(term, {from: accounts[2]})
                 .then(result => truffleAssert.eventEmitted(
                     result,
-                    'Staked',
+                    'RankClaimed',
                     (event) => {
                         return event.user === accounts[2]
                             && BigInt(bn2hexStr(event.term)) === BigInt(term)
@@ -84,18 +91,22 @@ contract("XEN Crypto", async accounts => {
        expectedStakeId++
    })
 
+    it("Should reject to withdraw stake before maturity", async () => {
+        await assert.rejects(() => token.claimRankReward({from: accounts[1]}));
+    })
+
     it("Should allow to withdraw stake upon maturity with XEN minted", async () => {
         // rewardAmount = (nextStakeId - stakeId) * stakeTerms[_msgSender() = (22 - 21) * 2
-        await advanceBlockAtTime(web3, Math.round((Date.now() / 1000) + (3600 * 24) * term))
+        await advanceBlockAtTime(web3, Math.round((controlTs / 1000) + (3600 * 24) * term))
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const rankDelta = (globalRank - genesisRank)
         const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
         await assert.doesNotReject(() => {
-            return token.withdrawAndShare(accounts[3], 50, {from: accounts[1]})
+            return token.claimRankRewardAndShare(accounts[3], 50, {from: accounts[1]})
                 .then(result => {
                     truffleAssert.eventEmitted(
                         result,
-                        'Withdrawn',
+                        'RankRewardClaimed',
                         (event) => {
                             return event.user === accounts[1]
                                 && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount)
