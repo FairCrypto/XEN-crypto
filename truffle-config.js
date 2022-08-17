@@ -10,7 +10,7 @@ const privKeysRinkeby = [ liveNetworkPK ]
 module.exports = {
 
   networks: {
-    development: {
+    ganache: {
       host: "127.0.0.1",
       port: 8545,
       network_id: "*",
@@ -29,7 +29,7 @@ module.exports = {
       skipDryRun: true,
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
-    },
+    }
   },
   mocha: {
     // timeout: 100000
