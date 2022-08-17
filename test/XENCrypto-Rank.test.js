@@ -96,6 +96,24 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         await assert.rejects(() => token.claimRankReward({from: accounts[1]}));
     })
 
+    it("Should reject to claim rank with smaller than 1 day term", async () => {
+        await truffleAssert.fails(
+            token.claimRank(0, {from: accounts[1]}),
+            "CRank: Term less than min"
+        )
+
+        await truffleAssert.fails(
+            token.claimRank(-1, {from: accounts[1]})
+        )
+    })
+
+    it("Should reject to claim rank with larger than 100 day term", async () => {
+        await truffleAssert.fails(
+            token.claimRank(101, {from: accounts[1]}),
+            "CRank: Term more than current max term"
+        )
+    })
+
     it("Should allow to withdraw stake upon maturity with XEN minted", async () => {
         // rewardAmount = (nextStakeId - stakeId) * stakeTerms[_msgSender() = (22 - 21) * 2
         await advanceBlockAtTime(web3, Math.round((controlTs / 1000) + (3600 * 24) * term))
