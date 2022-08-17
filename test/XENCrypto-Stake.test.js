@@ -31,6 +31,7 @@ const advanceBlockAtTime = (web3, time) => {
 contract("XEN Crypto (XEN Staking)", async accounts => {
 
     const genesisRank = 21
+    const maxTerm = 1000
     let token
     let term = 2
     let controlTs
@@ -46,15 +47,35 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
             const futureTs = Math.round((Date.now() / 1000) + term * 24 * 3600 + 1)
             await advanceBlockAtTime(web3, futureTs)
             await assert.doesNotReject(() => token.claimRankReward({from: accounts[1]}))
+            balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
+
         } catch (e) {
             console.error(e)
         }
     })
 
-    it("Should allow to stake XEN for any term between MIN & MAX", async () => {
-        // await advanceBlockAtTime(web3, Math.round((Date.now() / 1000))); /* get back to now */
+    it('Should not allow stake when term is less than 1 minute', async () => {
+        await truffleAssert.fails(
+            token.stake(balance / 2, 0, {from: accounts[1]}),
+            'XEN: Below min term',
+        )
+    })
 
-        balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
+    it('Should not allow stake when term is greater than 1000 days', async () => {
+        await truffleAssert.fails(
+            token.stake(balance / 2, maxTerm, {from: accounts[1]}),
+            'XEN: Above max term',
+        )
+    })
+
+    it('Should not allow stake when balance is not enough', async () => {
+        await truffleAssert.fails(
+            token.stake(balance + 1, maxTerm, {from: accounts[1]}),
+            'XEN: not enough balance',
+        )
+    })
+
+    it("Should allow to stake XEN for any term between MIN & MAX", async () => {
         const term = 5 /* days */
         await assert.doesNotReject(() => {
             return token.stake(balance / 2, term, {from: accounts[1]})
@@ -115,8 +136,7 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
     it("Should allow to register a new XEN stake with none already existing", async () => {
         await assert.doesNotReject(() => token.stake(balance / 4, term, {from: accounts[1]}));
     })
-
-
+    
     it("Should allow to withdraw stake after maturity with positive reward", async () => {
         const futureTs = Math.round((Date.now() / 1000) + term * 2 * 24 * 3600 + 1)
         await advanceBlockAtTime(web3, futureTs)
