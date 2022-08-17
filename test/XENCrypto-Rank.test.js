@@ -28,13 +28,14 @@ const advanceBlockAtTime = (web3, time) => {
     });
 };
 
-contract("XEN Crypto (Rank Claiming)", async accounts => {
+contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
+    const genesisRank = 21
     let token
     let term = 2
     let controlTs
-    const genesisRank = 21
     let expectedStakeId = genesisRank
+    let balance
 
     before(async () => {
         try {
@@ -64,7 +65,7 @@ contract("XEN Crypto (Rank Claiming)", async accounts => {
                             && BigInt(bn2hexStr(event.term)) === BigInt(term)
                             && BigInt(bn2hexStr(event.rank)) === BigInt(expectedStakeId)
                     }))
-                .catch(console.error)
+                //.catch(console.error)
         })
         expectedStakeId++
     })
@@ -86,7 +87,7 @@ contract("XEN Crypto (Rank Claiming)", async accounts => {
                             && BigInt(bn2hexStr(event.term)) === BigInt(term)
                             && BigInt(bn2hexStr(event.rank)) === BigInt(expectedStakeId)
                     }))
-                .catch(console.error)
+                //.catch(console.error)
         })
        expectedStakeId++
    })
@@ -128,7 +129,7 @@ contract("XEN Crypto (Rank Claiming)", async accounts => {
                                 && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
                         })
                 })
-                .catch(console.log)
+                //.catch(console.log)
         })
         assert.ok(expectedRewardAmount === await token.totalSupply().then(_ => _.toNumber()))
     })

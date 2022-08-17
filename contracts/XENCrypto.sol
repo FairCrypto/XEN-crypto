@@ -141,16 +141,16 @@ contract XENCrypto is
         view
         returns (uint256)
     {
-        if (block.timestamp + term * SECONDS_IN_DAY > maturityTs) {
-            return amount * XEN_APR * term / DAYS_IN_YEAR;
+        if (block.timestamp > maturityTs) {
+            return amount * XEN_APR * term / (DAYS_IN_YEAR * 100);
         }
         return 0;
     }
 
-    // PUBLIC CONVENIENCE GETTER
+    // PUBLIC CONVENIENCE GETTERS
 
     /**
-    * @dev returns Stake object associated with User account address
+    * @dev returns Rank Stake object associated with User account address
     */
     function getUserRankStake()
         external
@@ -158,6 +158,17 @@ contract XENCrypto is
         returns (RankStakeInfo memory)
     {
         return userRankStakes[_msgSender()];
+    }
+
+    /**
+    * @dev returns XEN Stake object associated with User account address
+    */
+    function getUserXenStake()
+        external
+        view
+        returns (XenStakeInfo memory)
+    {
+        return userXenStakes[_msgSender()];
     }
 
     // PUBLIC STATE-CHANGING METHODS
@@ -239,8 +250,8 @@ contract XENCrypto is
     {
         require(balanceOf(_msgSender()) >= amount, 'XEN: not enough balance');
         require(amount > XEN_MIN_STAKE, 'XEN: Below min stake');
-        require(term > MIN_TERM, 'XEN: Below min term');
-        require(term < MAX_TERM_END, 'XEN: Above max term');
+        require(term * SECONDS_IN_DAY > MIN_TERM, 'XEN: Below min term');
+        require(term * SECONDS_IN_DAY < MAX_TERM_END, 'XEN: Above max term');
         require(userXenStakes[_msgSender()].amount == 0, 'XEN: stake exists');
 
         // create XEN Stake
