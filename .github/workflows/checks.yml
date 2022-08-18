@@ -1,0 +1,33 @@
+name: checks
+
+on:
+  push:
+    branches:
+      - master
+      - release-v*
+  pull_request: {}
+  workflow_dispatch: {}
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - run: npm run lint
+
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 1
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Run tests
+        run: npm run test
