@@ -15,7 +15,6 @@ Create local `.env` file. Example:
 NETWORK=development
 `
 
-## Run tests (with clean slate)
+## Run tests
 
-`npm run test-ganache-clean`
-
+`npm run test`
