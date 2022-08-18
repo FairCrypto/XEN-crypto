@@ -8,7 +8,11 @@
   },
   "scripts": {
     "compile": "truffle compile -all",
-    "test": "truffle test"
+    "test": "truffle test",
+    "lint": "npm run lint:sol",
+    "lint:fix": "npm run lint:sol:fix",
+    "lint:sol": "solhint 'contracts/**/*.sol' && prettier -c 'contracts/**/*.sol'",
+    "lint:sol:fix": "prettier --write \"contracts/**/*.sol\""
   },
   "keywords": [
     "Fair Crypto Foundation",
@@ -23,7 +27,10 @@
     "@truffle/hdwallet-provider": "^2.0.13",
     "dotenv": "^16.0.1",
     "ganache-time-traveler": "^1.0.16",
-    "truffle-assertions": "^0.9.2"
+    "truffle-assertions": "^0.9.2",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "solhint": "^3.3.7"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3"
