@@ -33,8 +33,6 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
     const genesisRank = 21
     let token
     let term = 2
-    let controlTs
-    let expectedStakeId = genesisRank
     let balance
 
     before(async () => {
@@ -116,6 +114,9 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
         await assert.doesNotReject(() => token.stake(balance / 4, term, {from: accounts[1]}));
     })
 
+    it("APY should be equal to original MAX value", async () => {
+        assert.ok(await token.currentAPY().then(_ => _.toNumber()) === 20)
+    })
 
     it("Should allow to withdraw stake after maturity with positive reward", async () => {
         const futureTs = Math.round((Date.now() / 1000) + term * 2 * 24 * 3600 + 1)

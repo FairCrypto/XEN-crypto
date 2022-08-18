@@ -28,6 +28,7 @@ contract XENCrypto is
         uint256 term;
         uint256 maturityTs;
         uint256 amount;
+        uint256 APY;
     }
 
     // PUBLIC CONSTANTS
@@ -48,10 +49,13 @@ contract XENCrypto is
     uint256 constant public XEN_MIN_STAKE = 0;
     uint256 constant public XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
 
-    uint256 constant public XEN_APR = 20;
+    uint256 constant public XEN_MAX_APY = 20;
+    uint256 constant public XEN_MIN_APY = 2;
+    uint256 constant public XEN_APY_CORRECTION_INTERVAL = 90;
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
+    uint256 public genesisTs;
     uint256 public globalRank = GENESIS_RANK;
     uint256 public activeRankStakes;
     uint256 public activeXenStakes;
@@ -63,6 +67,12 @@ contract XENCrypto is
     mapping(uint256 => RankStakeInfo) public rankStakes;
     // user address => xen stake info
     mapping(address => XenStakeInfo) public userXenStakes;
+
+    // CONSTRUCTOR
+
+    constructor() {
+        genesisTs = block.timestamp;
+    }
 
     // PRIVATE METHODS
 
@@ -136,18 +146,18 @@ contract XENCrypto is
     /**
     * @dev calculates XEN Stake Reward
     */
-    function _calculateStakeReward(uint256 amount, uint256 term, uint256 maturityTs)
+    function _calculateStakeReward(XenStakeInfo memory userStake)
         private
         view
         returns (uint256)
     {
-        if (block.timestamp > maturityTs) {
-            return amount * XEN_APR * term / (DAYS_IN_YEAR * 100);
+        if (block.timestamp > userStake.maturityTs) {
+            return userStake.amount * userStake.APY * userStake.term / (DAYS_IN_YEAR * 100);
         }
         return 0;
     }
 
-    // PUBLIC CONVENIENCE GETTERS
+    // PUBLIC GETTERS
 
     /**
     * @dev returns Rank Stake object associated with User account address
@@ -171,6 +181,19 @@ contract XENCrypto is
         return userXenStakes[_msgSender()];
     }
 
+    /**
+    * @dev calculates and returns current XEN APY
+    */
+    function currentAPY()
+        public
+        view
+        returns (uint256)
+    {
+        uint256 decrease =
+            Math.min((block.timestamp - genesisTs)/(SECONDS_IN_DAY * 90), XEN_MAX_APY);
+        return Math.max(XEN_MAX_APY - decrease, XEN_MIN_APY);
+    }
+
     // PUBLIC STATE-CHANGING METHODS
 
     /**
@@ -180,9 +203,9 @@ contract XENCrypto is
         external
     {
         uint256 termSec = term * SECONDS_IN_DAY;
-        require(termSec > MIN_TERM, 'CRank: Term less than min');
-        require(termSec < currentMaxTerm, 'CRank: Term more than current max term');
-        require(userRankStakes[_msgSender()].rank == 0, 'CRank: Stake exists');
+        require(termSec > MIN_TERM, 'cRank: Term less than min');
+        require(termSec < currentMaxTerm, 'cRank: Term more than current max term');
+        require(userRankStakes[_msgSender()].rank == 0, 'cRank: Stake exists');
 
         // create and store new stakeInfo
         RankStakeInfo memory stakeInfo = RankStakeInfo({
@@ -204,8 +227,8 @@ contract XENCrypto is
         external
     {
         RankStakeInfo memory userStake = userRankStakes[_msgSender()];
-        require(userStake.rank > 0, 'CRank: Mo stake exists');
-        require(block.timestamp > userStake.maturityTs, 'CRank: Stake maturity not reached');
+        require(userStake.rank > 0, 'cRank: Mo stake exists');
+        require(block.timestamp > userStake.maturityTs, 'cRank: Stake maturity not reached');
 
         // calculate reward and mint tokens
         uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
@@ -223,11 +246,11 @@ contract XENCrypto is
         external
     {
         RankStakeInfo memory userStake = userRankStakes[_msgSender()];
-        require(userStake.rank > 0, 'CRank: Mo stake exists');
-        require(block.timestamp > userStake.maturityTs, 'CRank: Stake maturity not reached');
-        require(other != address(0), 'CRank: Cannot share with zero address');
-        require(pct > 0, 'CRank: Cannot share zero percent');
-        require(pct < 101, 'CRank: Cannot share 100+ percent');
+        require(userStake.rank > 0, 'cRank: Mo stake exists');
+        require(block.timestamp > userStake.maturityTs, 'cRank: Stake maturity not reached');
+        require(other != address(0), 'cRank: Cannot share with zero address');
+        require(pct > 0, 'cRank: Cannot share zero percent');
+        require(pct < 101, 'cRank: Cannot share 100+ percent');
 
         // calculate reward
         uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
@@ -258,7 +281,8 @@ contract XENCrypto is
         userXenStakes[_msgSender()] = XenStakeInfo({
             term: term,
             maturityTs: block.timestamp + term * SECONDS_IN_DAY,
-            amount: amount
+            amount: amount,
+            APY: currentAPY()
         });
         activeXenStakes++;
         totalXenStaked += amount;
@@ -277,7 +301,7 @@ contract XENCrypto is
         XenStakeInfo memory userStake = userXenStakes[_msgSender()];
         require(userStake.amount > 0, 'XEN: no stake exists');
 
-        uint256 xenReward = _calculateStakeReward(userStake.amount, userStake.term, userStake.maturityTs);
+        uint256 xenReward = _calculateStakeReward(userStake);
         activeXenStakes--;
         totalXenStaked -= userStake.amount;
 
