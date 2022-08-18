@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./Context.sol";
 import "./Math.sol";
-import "./ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IStakingToken.sol";
 import "./interfaces/IRankClaimingToken.sol";
 
