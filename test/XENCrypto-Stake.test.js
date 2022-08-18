@@ -3,30 +3,11 @@
 const assert = require('assert')
 //const ethers = require('ethers')
 const truffleAssert = require('truffle-assertions')
+const timeMachine = require('ganache-time-traveler');
 
 const XENCrypto = artifacts.require("XENCrypto")
 
 const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
-
-const advanceBlockAtTime = (web3, time) => {
-    return new Promise((resolve, reject) => {
-        web3.currentProvider.send(
-            {
-                jsonrpc: "2.0",
-                method: "evm_mine",
-                params: [time],
-                id: new Date().getTime(),
-            },
-            (err, _) => {
-                if (err) {
-                    return reject(err);
-                }
-                const newBlockHash = web3.eth.getBlock("latest").hash;
-                return resolve(newBlockHash);
-            },
-        );
-    });
-};
 
 contract("XEN Crypto (XEN Staking)", async accounts => {
 
@@ -34,7 +15,6 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
     const maxTerm = 1000
     let token
     let term = 2
-    let controlTs
     let expectedStakeId = genesisRank
     let balance
 
@@ -44,8 +24,8 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
             //console.log(await token.totalSupply().then(_ => _.toNumber()))
             await assert.doesNotReject(() => token.claimRank(term, {from: accounts[1]}))
             await assert.doesNotReject(() => token.claimRank(term, {from: accounts[2]})) // create rankDelta > 0
-            const futureTs = Math.round((Date.now() / 1000) + term * 24 * 3600 + 1)
-            await advanceBlockAtTime(web3, futureTs)
+            await timeMachine.advanceTime(term * 24 * 3600 + 1)
+            await timeMachine.advanceBlock()
             await assert.doesNotReject(() => token.claimRankReward({from: accounts[1]}))
             balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
 
@@ -136,10 +116,10 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
     it("Should allow to register a new XEN stake with none already existing", async () => {
         await assert.doesNotReject(() => token.stake(balance / 4, term, {from: accounts[1]}));
     })
-    
+
     it("Should allow to withdraw stake after maturity with positive reward", async () => {
-        const futureTs = Math.round((Date.now() / 1000) + term * 2 * 24 * 3600 + 1)
-        await advanceBlockAtTime(web3, futureTs)
+        await timeMachine.advanceTime(term * 24 * 3600 + 1)
+        await timeMachine.advanceBlock()
         const expectedReward = Math.floor((balance / 4) * term * 20 / (365 * 100))
         await assert.doesNotReject(() => {
             return token.withdraw({from: accounts[1]})
@@ -163,5 +143,4 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
                 })
         })
     })
-
 })

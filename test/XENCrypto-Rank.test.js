@@ -3,30 +3,11 @@
 const assert = require('assert')
 //const ethers = require('ethers')
 const truffleAssert = require('truffle-assertions')
+const timeMachine = require('ganache-time-traveler');
 
 const XENCrypto = artifacts.require("XENCrypto")
 
 const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
-
-const advanceBlockAtTime = (web3, time) => {
-    return new Promise((resolve, reject) => {
-        web3.currentProvider.send(
-            {
-                jsonrpc: "2.0",
-                method: "evm_mine",
-                params: [time],
-                id: new Date().getTime(),
-            },
-            (err, _) => {
-                if (err) {
-                    return reject(err);
-                }
-                const newBlockHash = web3.eth.getBlock("latest").hash;
-                return resolve(newBlockHash);
-            },
-        );
-    });
-};
 
 contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
@@ -75,8 +56,6 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     })
 
     it("Should allow to stake with next ID (rank) having #22", async () => {
-       controlTs = Date.now()
-       await advanceBlockAtTime(web3, Math.round((controlTs / 1000) + ((3600 * 24) * term / 2)))
        await assert.doesNotReject(() => {
             return token.claimRank(term, {from: accounts[2]})
                 .then(result => truffleAssert.eventEmitted(
@@ -115,8 +94,9 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     })
 
     it("Should allow to withdraw stake upon maturity with XEN minted", async () => {
-        // rewardAmount = (nextStakeId - stakeId) * stakeTerms[_msgSender() = (22 - 21) * 2
-        await advanceBlockAtTime(web3, Math.round((controlTs / 1000) + (3600 * 24) * term))
+        await timeMachine.advanceTime(3600 * 24 * term + 1);
+        await timeMachine.advanceBlock();
+
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const rankDelta = (globalRank - genesisRank)
         const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
