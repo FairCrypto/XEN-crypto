@@ -11,11 +11,9 @@ const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
 
 contract("XEN Crypto (XEN Staking)", async accounts => {
 
-    const genesisRank = 21
     const maxTerm = 1000
     let token
     let term = 2
-    let expectedStakeId = genesisRank
     let balance
 
     before(async () => {
@@ -142,5 +140,19 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
                         })
                 })
         })
+    })
+
+    it("Should return user xen stake", async() => {
+        const term = Math.floor(Math.random() * (99 - 2) + 2)
+        const blockNumber = await web3.eth.getBlockNumber();
+        const timestamp = (await web3.eth.getBlock(blockNumber)).timestamp
+        const maturityTs = timestamp + 3600 * 24 * term
+
+        await token.stake(balance / 2, term, {from: accounts[1]})
+        let rankState = await token.getUserXenStake({from: accounts[1]})
+
+        assert.equal(rankState.amount, balance / 2)
+        assert.equal(rankState.term, term)
+        assert.ok(rankState.maturityTs >= maturityTs)
     })
 })
