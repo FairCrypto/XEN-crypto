@@ -191,9 +191,9 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
      */
     function claimRankRewardAndShare(address other, uint256 pct) external {
         RankStakeInfo memory userStake = userRankStakes[_msgSender()];
+        require(other != address(0), "CRank: Cannot share with zero address");
         require(userStake.rank > 0, "CRank: No stake exists");
         require(block.timestamp > userStake.maturityTs, "CRank: Stake maturity not reached");
-        require(other != address(0), "CRank: Cannot share with zero address");
         require(pct > 0, "CRank: Cannot share zero percent");
         require(pct < 101, "CRank: Cannot share 100+ percent");
 
