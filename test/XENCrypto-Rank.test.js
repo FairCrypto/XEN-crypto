@@ -71,7 +71,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
    })
 
     it("Should reject to withdraw stake before maturity", async () => {
-        await assert.rejects(() => token.claimRankReward({from: accounts[1]}));
+        await assert.rejects(() => token.claimMintReward({from: accounts[1]}));
     })
 
     it("Should reject to claim rank reward when stake maturity not reached", async () => {
@@ -81,7 +81,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         try {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
-                token.claimRankReward({from: accounts[6]}),
+                token.claimMintReward({from: accounts[6]}),
                 "CRank: Stake maturity not reached"
             )
         } catch (err) {
@@ -100,7 +100,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
             await token.claimRank(term, {from: accounts[6]})
             await timeMachine.advanceTime(term * 24 * 3600 + 1)
             await timeMachine.advanceBlock()
-            await token.claimRankReward({from: accounts[6]})
+            await token.claimMintReward({from: accounts[6]})
         } catch (err) {
             throw(err)
         } finally {
@@ -115,7 +115,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         try {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
-                token.claimRankRewardAndShare(accounts[7], 50, {from: accounts[6]}),
+                token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
                 "CRank: Stake maturity not reached"
             )
         } catch (err) {
@@ -127,32 +127,32 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
     it("Should reject to claim rank reward and share when no stake exists", async () => {
         await truffleAssert.fails(
-            token.claimRankRewardAndShare(accounts[7], 50, {from: accounts[6]}),
+            token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
             "CRank: No stake exists"
         )
     })
 
     it("Should reject to claim rank reward and share when sharing to zero address", async () => {
         await truffleAssert.fails(
-            token.claimRankRewardAndShare('0x0000000000000000000000000000000000000000', 50, {from: accounts[6]}),
+            token.claimMintRewardAndShare('0x0000000000000000000000000000000000000000', 50, {from: accounts[6]}),
             "CRank: Cannot share with zero address"
         )
     })
 
     it("Should reject to claim rank reward and share when percent is less than 1", async () => {
         await truffleAssert.fails(
-            token.claimRankRewardAndShare(accounts[7], 0, {from: accounts[6]}),
+            token.claimMintRewardAndShare(accounts[7], 0, {from: accounts[6]}),
             "CRank: Cannot share zero percent"
         )
 
         await truffleAssert.fails(
-            token.claimRankRewardAndShare(accounts[7], -1, {from: accounts[6]}),
+            token.claimMintRewardAndShare(accounts[7], -1, {from: accounts[6]}),
         )
     })
 
     it("Should reject to claim rank reward and share when percent is greater than 100", async () => {
         await truffleAssert.fails(
-            token.claimRankRewardAndShare(accounts[7], 101, {from: accounts[6]}),
+            token.claimMintRewardAndShare(accounts[7], 101, {from: accounts[6]}),
             "CRank: Cannot share 100+ percent"
         )
     })
@@ -183,11 +183,11 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         const rankDelta = (globalRank - genesisRank)
         const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
         await assert.doesNotReject(() => {
-            return token.claimRankRewardAndShare(accounts[3], 50, {from: accounts[1]})
+            return token.claimMintRewardAndShare(accounts[3], 50, {from: accounts[1]})
                 .then(result => {
                     truffleAssert.eventEmitted(
                         result,
-                        'RankRewardClaimed',
+                        'MintClaimed',
                         (event) => {
                             return event.user === accounts[1]
                                 && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount)
@@ -214,19 +214,19 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         assert.ok(expectedRewardAmount === await token.totalSupply().then(_ => _.toNumber()))
     })
 
-    it("Should return user rank stake", async() => {
-        const term = Math.floor(Math.random() * (100 - 2) + 2)
+    it("Should return user MintInfo", async() => {
+        const mintTerm = Math.floor(Math.random() * (100 - 2) + 2)
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const blockNumber = await web3.eth.getBlockNumber();
         const timestamp = (await web3.eth.getBlock(blockNumber)).timestamp
-        const maturityTs = timestamp + 3600 * 24 * term
+        const maturityTs = timestamp + 3600 * 24 * mintTerm
 
-        await token.claimRank(term, {from: accounts[4]})
-        let rankState = await token.getUserRankStake({from: accounts[4]})
+        await token.claimRank(mintTerm, {from: accounts[4]})
+        let mintInfo = await token.getUserMint({from: accounts[4]})
 
-        assert.equal(rankState.user, accounts[4])
-        assert.equal(rankState.term, term)
-        assert.equal(rankState.rank, globalRank)
-        assert.ok(rankState.maturityTs >= maturityTs)
+        assert.equal(mintInfo.user, accounts[4])
+        assert.equal(mintInfo.term, mintTerm)
+        assert.equal(mintInfo.rank, globalRank)
+        assert.ok(mintInfo.maturityTs >= maturityTs)
     })
 })

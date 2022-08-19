@@ -4,13 +4,13 @@ pragma solidity ^0.8.10;
 import "./Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IStakingToken.sol";
-import "./interfaces/IRankClaimingToken.sol";
+import "./interfaces/IRankedMintingToken.sol";
 
-contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Crypto", "XEN") {
+contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Crypto", "XEN") {
     using Math for uint256;
 
     // INTERNAL TYPE TO DESCRIBE A RANK STAKE
-    struct RankStakeInfo {
+    struct MintInfo {
         address user;
         uint256 term;
         uint256 maturityTs;
@@ -18,7 +18,7 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
     }
 
     // INTERNAL TYPE TO DESCRIBE A XEN STAKE
-    struct XenStakeInfo {
+    struct StakeInfo {
         uint256 term;
         uint256 maturityTs;
         uint256 amount;
@@ -47,16 +47,16 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
     uint256 public globalRank = GENESIS_RANK;
-    uint256 public activeRankStakes;
-    uint256 public activeXenStakes;
+    uint256 public activeMinters;
+    uint256 public activeStakes;
     uint256 public totalXenStaked;
     uint256 public currentMaxTerm = MAX_TERM_START;
-    // user address => rank stake info
-    mapping(address => RankStakeInfo) public userRankStakes;
-    // rank => stake info
-    mapping(uint256 => RankStakeInfo) public rankStakes;
-    // user address => xen stake info
-    mapping(address => XenStakeInfo) public userXenStakes;
+    // user address => XEN mint info
+    mapping(address => MintInfo) public userMints;
+    // rank => XEN mint info
+    mapping(uint256 => MintInfo) public mintsByRank;
+    // user address => XEN stake info
+    mapping(address => StakeInfo) public userStakes;
 
     // PRIVATE METHODS
 
@@ -65,9 +65,9 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
      *      (if over TERM_AMPLIFIER_THRESHOLD)
      */
     function _addStakeAndAdjustMaxTerm() private {
-        activeRankStakes++;
-        if (activeRankStakes > TERM_AMPLIFIER_THRESHOLD) {
-            uint256 newMax = MIN_TERM + activeRankStakes.log2() * TERM_AMPLIFIER;
+        activeMinters++;
+        if (activeMinters > TERM_AMPLIFIER_THRESHOLD) {
+            uint256 newMax = MIN_TERM + globalRank.log2() * TERM_AMPLIFIER;
             if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
                 currentMaxTerm = newMax;
             }
@@ -75,10 +75,10 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
     }
 
     /**
-     * @dev calculates Stake Withdrawal Window based on Stake Term
+     * @dev calculates Stake Withdrawal Window based on Mint Term
      */
-    function _withdrawalWindow(uint256 userTerm) private pure returns (uint256) {
-        return (userTerm * SECONDS_IN_DAY).log2();
+    function _withdrawalWindow(uint256 term) private pure returns (uint256) {
+        return (term * SECONDS_IN_DAY).log2();
     }
 
     /**
@@ -92,27 +92,28 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
     }
 
     /**
-     * @dev calculates net Stake Reward (adjusted for Penalty)
+     * @dev calculates net Mint Reward (adjusted for Penalty)
      */
-    function _calculateReward(
-        uint256 userRank,
-        uint256 userTerm,
+    function _calculateMintReward(
+        uint256 cRank,
+        uint256 term,
         uint256 maturityTs
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
-        uint256 penalty = _penalty(_withdrawalWindow(userTerm), secsLate);
-        uint256 rankDelta = globalRank - userRank;
-        uint256 reward = rankDelta.log2() * RANK_AMPLIFIER * userTerm;
-        return (reward * (128 - penalty)) >> 7;
+        uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
+        uint256 rankDelta = Math.max(globalRank - cRank, 1);
+        uint256 reward = rankDelta.log2() * RANK_AMPLIFIER * term;
+        uint256 adjustedReward = reward / activeMinters.log2();
+        return (adjustedReward * (128 - penalty)) >> 7;
     }
 
     /**
      * @dev cleans up Stake storage (gets some Gas credit;))
      */
-    function _cleanUpStake(uint256 rank) private {
-        delete userRankStakes[_msgSender()];
-        delete rankStakes[rank];
-        activeRankStakes--;
+    function _cleanUpStake(uint256 cRank) private {
+        delete userMints[_msgSender()];
+        delete mintsByRank[cRank];
+        activeMinters--;
     }
 
     /**
@@ -134,15 +135,15 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
     /**
      * @dev returns Rank Stake object associated with User account address
      */
-    function getUserRankStake() external view returns (RankStakeInfo memory) {
-        return userRankStakes[_msgSender()];
+    function getUserMint() external view returns (MintInfo memory) {
+        return userMints[_msgSender()];
     }
 
     /**
      * @dev returns XEN Stake object associated with User account address
      */
-    function getUserXenStake() external view returns (XenStakeInfo memory) {
-        return userXenStakes[_msgSender()];
+    function getUserStake() external view returns (StakeInfo memory) {
+        return userStakes[_msgSender()];
     }
 
     // PUBLIC STATE-CHANGING METHODS
@@ -154,51 +155,51 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
         uint256 termSec = term * SECONDS_IN_DAY;
         require(termSec > MIN_TERM, "CRank: Term less than min");
         require(termSec < currentMaxTerm, "CRank: Term more than current max term");
-        require(userRankStakes[_msgSender()].rank == 0, "CRank: Stake exists");
+        require(userMints[_msgSender()].rank == 0, "CRank: Stake exists");
 
-        // create and store new stakeInfo
-        RankStakeInfo memory stakeInfo = RankStakeInfo({
+        // create and store new MintInfo
+        MintInfo memory mintInfo = MintInfo({
             user: _msgSender(),
             term: term,
             maturityTs: block.timestamp + termSec,
             rank: globalRank
         });
-        userRankStakes[_msgSender()] = stakeInfo;
-        rankStakes[globalRank] = stakeInfo;
+        userMints[_msgSender()] = mintInfo;
+        mintsByRank[globalRank] = mintInfo;
         _addStakeAndAdjustMaxTerm();
         emit RankClaimed(_msgSender(), term, globalRank++);
     }
 
     /**
-     * @dev ends Rank Stake upon maturity (and within permitted Withdrawal time Window), mints XEN coins
+     * @dev ends minting upon maturity (and within permitted Withdrawal time Window), gets minted XEN
      */
-    function claimRankReward() external {
-        RankStakeInfo memory userStake = userRankStakes[_msgSender()];
-        require(userStake.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > userStake.maturityTs, "CRank: Stake maturity not reached");
+    function claimMintReward() external {
+        MintInfo memory mintInfo = userMints[_msgSender()];
+        require(mintInfo.rank > 0, "CRank: No stake exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward and mint tokens
-        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
+        uint256 rewardAmount = _calculateMintReward(mintInfo.rank, mintInfo.term, mintInfo.maturityTs);
         _mint(_msgSender(), rewardAmount);
 
-        _cleanUpStake(userStake.rank);
-        emit RankRewardClaimed(_msgSender(), rewardAmount);
+        _cleanUpStake(mintInfo.rank);
+        emit MintClaimed(_msgSender(), rewardAmount);
     }
 
     /**
      * @dev  ends Rank Stake upon maturity (and within permitted Withdrawal time Window)
      *       mints XEN coins and splits them between User and designated other address
      */
-    function claimRankRewardAndShare(address other, uint256 pct) external {
-        RankStakeInfo memory userStake = userRankStakes[_msgSender()];
+    function claimMintRewardAndShare(address other, uint256 pct) external {
+        MintInfo memory mintInfo = userMints[_msgSender()];
         require(other != address(0), "CRank: Cannot share with zero address");
         require(pct > 0, "CRank: Cannot share zero percent");
         require(pct < 101, "CRank: Cannot share 100+ percent");
-        require(userStake.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > userStake.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "CRank: No stake exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward
-        uint256 rewardAmount = _calculateReward(userStake.rank, userStake.term, userStake.maturityTs);
+        uint256 rewardAmount = _calculateMintReward(mintInfo.rank, mintInfo.term, mintInfo.maturityTs);
         uint256 sharedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - sharedReward;
 
@@ -206,8 +207,8 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
         _mint(_msgSender(), ownReward);
         _mint(other, sharedReward);
 
-        _cleanUpStake(userStake.rank);
-        emit RankRewardClaimed(_msgSender(), rewardAmount);
+        _cleanUpStake(mintInfo.rank);
+        emit MintClaimed(_msgSender(), rewardAmount);
     }
 
     /**
@@ -218,15 +219,15 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
         require(amount > XEN_MIN_STAKE, "XEN: Below min stake");
         require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min term");
         require(term * SECONDS_IN_DAY < MAX_TERM_END, "XEN: Above max term");
-        require(userXenStakes[_msgSender()].amount == 0, "XEN: stake exists");
+        require(userStakes[_msgSender()].amount == 0, "XEN: stake exists");
 
         // create XEN Stake
-        userXenStakes[_msgSender()] = XenStakeInfo({
+        userStakes[_msgSender()] = StakeInfo({
             term: term,
             maturityTs: block.timestamp + term * SECONDS_IN_DAY,
             amount: amount
         });
-        activeXenStakes++;
+        activeStakes++;
         totalXenStaked += amount;
 
         // burn staked XEN
@@ -238,16 +239,16 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
      * @dev ends XEN Stake and gets reward if the Stake is mature
      */
     function withdraw() external {
-        XenStakeInfo memory userStake = userXenStakes[_msgSender()];
+        StakeInfo memory userStake = userStakes[_msgSender()];
         require(userStake.amount > 0, "XEN: no stake exists");
 
         uint256 xenReward = _calculateStakeReward(userStake.amount, userStake.term, userStake.maturityTs);
-        activeXenStakes--;
+        activeStakes--;
         totalXenStaked -= userStake.amount;
 
         // mint staked XEN (+ reward)
         _mint(_msgSender(), userStake.amount + xenReward);
         emit Withdrawn(_msgSender(), userStake.amount, xenReward);
-        delete userXenStakes[_msgSender()];
+        delete userStakes[_msgSender()];
     }
 }
