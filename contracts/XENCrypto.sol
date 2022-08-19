@@ -174,7 +174,7 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
      */
     function claimRankReward() external {
         RankStakeInfo memory userStake = userRankStakes[_msgSender()];
-        require(userStake.rank > 0, "CRank: Mo stake exists");
+        require(userStake.rank > 0, "CRank: No stake exists");
         require(block.timestamp > userStake.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward and mint tokens
@@ -191,7 +191,7 @@ contract XENCrypto is Context, IRankClaimingToken, IStakingToken, ERC20("XEN Cry
      */
     function claimRankRewardAndShare(address other, uint256 pct) external {
         RankStakeInfo memory userStake = userRankStakes[_msgSender()];
-        require(userStake.rank > 0, "CRank: Mo stake exists");
+        require(userStake.rank > 0, "CRank: No stake exists");
         require(block.timestamp > userStake.maturityTs, "CRank: Stake maturity not reached");
         require(other != address(0), "CRank: Cannot share with zero address");
         require(pct > 0, "CRank: Cannot share zero percent");
