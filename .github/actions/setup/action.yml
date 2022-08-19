@@ -21,6 +21,16 @@ runs:
       env:
         SKIP_COMPILE: true
 
+    # Yarn global install is much faster than npm
+    - name: Setup yarn
+      run: npm install -g yarn
+      shell: bash
+
+    - uses: actions/cache@v3
+      with:
+        path: '/home/runner/.config/yarn/global'
+        key: yarn-v3-${{ hashFiles('**/package-lock.json') }}
+
     - name: Install Truffle
-      run: npm install -g --no-audit --prefer-offline truffle
+      run: yarn global add truffle
       shell: bash
