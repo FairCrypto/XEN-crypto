@@ -21,6 +21,12 @@ runs:
       env:
         SKIP_COMPILE: true
 
+    - name: Cache Global node modules
+      uses: actions/cache@v2
+      with:
+        path: '~/.npm'
+        key: npm-v3-${{ hashFiles('**/package-lock.json') }}
+
     - name: Install Truffle
       run: npm install truffle -g
       shell: bash
