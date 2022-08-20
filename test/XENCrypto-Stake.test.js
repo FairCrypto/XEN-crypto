@@ -24,7 +24,7 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
             await assert.doesNotReject(() => token.claimRank(term, {from: accounts[2]})) // create rankDelta > 0
             await timeMachine.advanceTime(term * 24 * 3600 + 1)
             await timeMachine.advanceBlock()
-            await assert.doesNotReject(() => token.claimRankReward({from: accounts[1]}))
+            await assert.doesNotReject(() => token.claimMintReward({from: accounts[1]}))
             balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
 
         } catch (e) {
@@ -149,10 +149,10 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
         const maturityTs = timestamp + 3600 * 24 * term
 
         await token.stake(balance / 2, term, {from: accounts[1]})
-        let rankState = await token.getUserXenStake({from: accounts[1]})
+        let stakeInfo = await token.getUserStake({from: accounts[1]})
 
-        assert.equal(rankState.amount, balance / 2)
-        assert.equal(rankState.term, term)
-        assert.ok(rankState.maturityTs >= maturityTs)
+        assert.equal(stakeInfo.amount, balance / 2)
+        assert.equal(stakeInfo.term, term)
+        assert.ok(stakeInfo.maturityTs >= maturityTs)
     })
 })
