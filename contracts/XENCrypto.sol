@@ -41,7 +41,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant TERM_AMPLIFIER_THRESHOLD = 5_000;
     uint256 public constant REWARD_AMPLIFIER_START = 3_000;
     uint256 public constant REWARD_AMPLIFIER_END = 300;
-    uint256 public constant REWARD_AMPLIFIER_STEP = 15;
+    uint256 public constant REWARD_AMPLIFIER_STEP = 45;
 
     uint256 public constant XEN_MIN_STAKE = 0;
     uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
