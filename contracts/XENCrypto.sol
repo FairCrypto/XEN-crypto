@@ -145,8 +145,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
      * @dev calculates Reward Amplifier
      */
     function _calculateRewardAmplifier() private view returns (uint256) {
-        uint256 amplifierDecrease =
-            REWARD_AMPLIFIER_STEP * (block.timestamp - genesisTs) / SECONDS_IN_MONTH;
+        uint256 amplifierDecrease = (REWARD_AMPLIFIER_STEP * (block.timestamp - genesisTs)) / SECONDS_IN_MONTH;
         if (amplifierDecrease < REWARD_AMPLIFIER_START) {
             return Math.max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
         } else {
@@ -204,12 +203,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward and mint tokens
-        uint256 rewardAmount =
-            _calculateMintReward(
-                mintInfo.rank,
-                mintInfo.term,
-                mintInfo.maturityTs,
-                mintInfo.amplifier
+        uint256 rewardAmount = _calculateMintReward(
+            mintInfo.rank,
+            mintInfo.term,
+            mintInfo.maturityTs,
+            mintInfo.amplifier
         );
         _mint(_msgSender(), rewardAmount);
 
@@ -230,8 +228,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward
-        uint256 rewardAmount =
-        _calculateMintReward(
+        uint256 rewardAmount = _calculateMintReward(
             mintInfo.rank,
             mintInfo.term,
             mintInfo.maturityTs,
