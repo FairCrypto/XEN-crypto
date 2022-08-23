@@ -15,6 +15,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 term;
         uint256 maturityTs;
         uint256 rank;
+        uint256 amplifier;
     }
 
     // INTERNAL TYPE TO DESCRIBE A XEN STAKE
@@ -28,6 +29,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
 
     uint256 public constant SECONDS_IN_DAY = 3_600 * 24;
     uint256 public constant SECONDS_IN_WEEK = 3_600 * 24 * 7;
+    uint256 public constant SECONDS_IN_MONTH = 3_600 * 24 * 30;
     uint256 public constant DAYS_IN_YEAR = 365;
 
     uint256 public constant GENESIS_RANK = 21;
@@ -37,7 +39,9 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant MAX_TERM_END = 1_000 * SECONDS_IN_DAY;
     uint256 public constant TERM_AMPLIFIER = 15;
     uint256 public constant TERM_AMPLIFIER_THRESHOLD = 5_000;
-    uint256 public constant RANK_AMPLIFIER = 3_000;
+    uint256 public constant REWARD_AMPLIFIER_START = 3_000;
+    uint256 public constant REWARD_AMPLIFIER_END = 300;
+    uint256 public constant REWARD_AMPLIFIER_STEP = 45;
 
     uint256 public constant XEN_MIN_STAKE = 0;
     uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
@@ -46,6 +50,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
+    uint256 public genesisTs;
     uint256 public globalRank = GENESIS_RANK;
     uint256 public activeMinters;
     uint256 public activeStakes;
@@ -57,6 +62,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     mapping(uint256 => MintInfo) public mintsByRank;
     // user address => XEN stake info
     mapping(address => StakeInfo) public userStakes;
+
+    // CONSTRUCTOR
+    constructor() {
+        genesisTs = block.timestamp;
+    }
 
     // PRIVATE METHODS
 
@@ -97,12 +107,13 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     function _calculateMintReward(
         uint256 cRank,
         uint256 term,
-        uint256 maturityTs
+        uint256 maturityTs,
+        uint256 amplifier
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
         uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
         uint256 rankDelta = Math.max(globalRank - cRank, 1);
-        uint256 reward = rankDelta.log2() * RANK_AMPLIFIER * term;
+        uint256 reward = rankDelta.log2() * amplifier * term;
         uint256 adjustedReward = reward / activeMinters.log2();
         return (adjustedReward * (128 - penalty)) >> 7;
     }
@@ -128,6 +139,18 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             return (amount * XEN_APR * term) / (DAYS_IN_YEAR * 100);
         }
         return 0;
+    }
+
+    /**
+     * @dev calculates Reward Amplifier
+     */
+    function _calculateRewardAmplifier() private view returns (uint256) {
+        uint256 amplifierDecrease = (REWARD_AMPLIFIER_STEP * (block.timestamp - genesisTs)) / SECONDS_IN_MONTH;
+        if (amplifierDecrease < REWARD_AMPLIFIER_START) {
+            return Math.max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
+        } else {
+            return REWARD_AMPLIFIER_END;
+        }
     }
 
     // PUBLIC CONVENIENCE GETTERS
@@ -162,7 +185,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             user: _msgSender(),
             term: term,
             maturityTs: block.timestamp + termSec,
-            rank: globalRank
+            rank: globalRank,
+            amplifier: _calculateRewardAmplifier()
         });
         userMints[_msgSender()] = mintInfo;
         mintsByRank[globalRank] = mintInfo;
@@ -179,7 +203,12 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward and mint tokens
-        uint256 rewardAmount = _calculateMintReward(mintInfo.rank, mintInfo.term, mintInfo.maturityTs);
+        uint256 rewardAmount = _calculateMintReward(
+            mintInfo.rank,
+            mintInfo.term,
+            mintInfo.maturityTs,
+            mintInfo.amplifier
+        );
         _mint(_msgSender(), rewardAmount);
 
         _cleanUpStake(mintInfo.rank);
@@ -199,7 +228,12 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
 
         // calculate reward
-        uint256 rewardAmount = _calculateMintReward(mintInfo.rank, mintInfo.term, mintInfo.maturityTs);
+        uint256 rewardAmount = _calculateMintReward(
+            mintInfo.rank,
+            mintInfo.term,
+            mintInfo.maturityTs,
+            mintInfo.amplifier
+        );
         uint256 sharedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - sharedReward;
 
