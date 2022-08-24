@@ -112,7 +112,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
         uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
-        uint256 rankDelta = Math.max(globalRank - cRank, 1);
+        uint256 rankDelta = Math.max(globalRank - cRank, 2);
         uint256 reward = rankDelta.log2() * amplifier * term;
         uint256 adjustedReward = reward / activeMinters.log2();
         return (adjustedReward * (128 - penalty)) >> 7;
