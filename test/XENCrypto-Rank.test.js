@@ -82,7 +82,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
                 token.claimMintReward({from: accounts[6]}),
-                "CRank: Stake maturity not reached"
+                "Mint: Maturity not reached"
             )
         } catch (err) {
             throw(err)
@@ -115,8 +115,8 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         try {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
-                token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
-                "CRank: Stake maturity not reached"
+                token.claimMintRewardAndDrop([accounts[7]], {from: accounts[6]}),
+                "Mint: Maturity not reached"
             )
         } catch (err) {
             throw(err)
@@ -127,33 +127,15 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
     it("Should reject to claim rank reward and share when no stake exists", async () => {
         await truffleAssert.fails(
-            token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
-            "CRank: No stake exists"
+            token.claimMintRewardAndDrop([accounts[7]], {from: accounts[6]}),
+            "Mint: No record exists"
         )
     })
 
     it("Should reject to claim rank reward and share when sharing to zero address", async () => {
         await truffleAssert.fails(
-            token.claimMintRewardAndShare('0x0000000000000000000000000000000000000000', 50, {from: accounts[6]}),
-            "CRank: Cannot share with zero address"
-        )
-    })
-
-    it("Should reject to claim rank reward and share when percent is less than 1", async () => {
-        await truffleAssert.fails(
-            token.claimMintRewardAndShare(accounts[7], 0, {from: accounts[6]}),
-            "CRank: Cannot share zero percent"
-        )
-
-        await truffleAssert.fails(
-            token.claimMintRewardAndShare(accounts[7], -1, {from: accounts[6]}),
-        )
-    })
-
-    it("Should reject to claim rank reward and share when percent is greater than 100", async () => {
-        await truffleAssert.fails(
-            token.claimMintRewardAndShare(accounts[7], 101, {from: accounts[6]}),
-            "CRank: Cannot share 100+ percent"
+            token.claimMintRewardAndDrop(['0x0000000000000000000000000000000000000000'], {from: accounts[6]}),
+            "Mint: Cannot drop to 0"
         )
     })
 
@@ -181,16 +163,17 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const rankDelta = (globalRank - genesisRank)
-        const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
+        const expectedOwnRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term) + 10
+        const expectedOtherRewardAmount = 10
         await assert.doesNotReject(() => {
-            return token.claimMintRewardAndShare(accounts[3], 50, {from: accounts[1]})
+            return token.claimMintRewardAndDrop([accounts[3]], {from: accounts[1]})
                 .then(result => {
                     truffleAssert.eventEmitted(
                         result,
                         'MintClaimed',
                         (event) => {
                             return event.user === accounts[1]
-                                && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedRewardAmount)
+                                && BigInt(bn2hexStr(event.rewardAmount)) === BigInt(expectedOwnRewardAmount)
                         })
                     truffleAssert.eventEmitted(
                         result,
@@ -198,7 +181,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
                         (event) => {
                             return event.to === accounts[1]
                                 && event.from === '0x0000000000000000000000000000000000000000'
-                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedOwnRewardAmount)
                         })
                     truffleAssert.eventEmitted(
                         result,
@@ -206,12 +189,13 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
                         (event) => {
                             return event.to === accounts[3]
                                 && event.from === '0x0000000000000000000000000000000000000000'
-                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedOtherRewardAmount)
                         })
                 })
                 //.catch(console.log)
         })
-        assert.ok(expectedRewardAmount === await token.totalSupply().then(_ => _.toNumber()))
+        assert.ok(expectedOwnRewardAmount + expectedOtherRewardAmount
+            === await token.totalSupply().then(_ => _.toNumber()))
     })
 
     it("Should return user MintInfo", async() => {

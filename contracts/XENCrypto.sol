@@ -43,6 +43,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant REWARD_AMPLIFIER_END = 300;
     uint256 public constant REWARD_AMPLIFIER_STEP = 45;
 
+    uint256 public constant DROP_REWARD = 10;
+
     uint256 public constant XEN_MIN_STAKE = 0;
     uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
 
@@ -199,8 +201,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
      */
     function claimMintReward() external {
         MintInfo memory mintInfo = userMints[_msgSender()];
-        require(mintInfo.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "Mint: No record exists");
+        require(block.timestamp > mintInfo.maturityTs, "Mint: Maturity not reached");
 
         // calculate reward and mint tokens
         uint256 rewardAmount = _calculateMintReward(
@@ -219,13 +221,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
      * @dev  ends Rank Stake upon maturity (and within permitted Withdrawal time Window)
      *       mints XEN coins and splits them between User and designated other address
      */
-    function claimMintRewardAndShare(address other, uint256 pct) external {
+    function claimMintRewardAndDrop(address[] calldata others) external {
         MintInfo memory mintInfo = userMints[_msgSender()];
-        require(other != address(0), "CRank: Cannot share with zero address");
-        require(pct > 0, "CRank: Cannot share zero percent");
-        require(pct < 101, "CRank: Cannot share 100+ percent");
-        require(mintInfo.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "Mint: No record exists");
+        require(block.timestamp > mintInfo.maturityTs, "Mint: Maturity not reached");
+        require(others.length > 0, "Mint: other.length is zero");
 
         // calculate reward
         uint256 rewardAmount = _calculateMintReward(
@@ -233,13 +233,17 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             mintInfo.term,
             mintInfo.maturityTs,
             mintInfo.amplifier
-        );
-        uint256 sharedReward = (rewardAmount * pct) / 100;
-        uint256 ownReward = rewardAmount - sharedReward;
+        ) + DROP_REWARD * others.length;
 
         // mint reward tokens
-        _mint(_msgSender(), ownReward);
-        _mint(other, sharedReward);
+        _mint(_msgSender(), rewardAmount);
+
+        // mint other tokens
+        for(uint i = 0; i < others.length; i++) {
+            address other = others[i];
+            require(other != address(0), "Mint: Cannot drop to 0");
+            _mint(other, DROP_REWARD);
+        }
 
         _cleanUpStake(mintInfo.rank);
         emit MintClaimed(_msgSender(), rewardAmount);
