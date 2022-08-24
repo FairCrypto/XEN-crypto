@@ -239,7 +239,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         _mint(_msgSender(), rewardAmount);
 
         // mint other tokens
-        for(uint i = 0; i < others.length; i++) {
+        for (uint256 i = 0; i < others.length; i++) {
             address other = others[i];
             require(other != address(0), "Mint: Cannot drop to 0");
             _mint(other, DROP_REWARD);
