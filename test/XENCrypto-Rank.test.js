@@ -133,10 +133,23 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     })
 
     it("Should reject to claim rank reward and share when sharing to zero address", async () => {
-        await truffleAssert.fails(
-            token.claimMintRewardAndDrop(['0x0000000000000000000000000000000000000000'], {from: accounts[6]}),
-            "Mint: Cannot drop to 0"
-        )
+        const snapshot = await timeMachine.takeSnapshot();
+        const snapshotId = snapshot['result'];
+
+        try {
+            await token.claimRank(term, {from: accounts[6]})
+            await timeMachine.advanceTime(term * 24 * 3600 + 1)
+            await timeMachine.advanceBlock()
+
+            await truffleAssert.fails(
+                token.claimMintRewardAndDrop(['0x0000000000000000000000000000000000000000'], {from: accounts[6]}),
+                "Mint: Cannot drop to 0"
+            )
+        } catch (err) {
+            throw(err)
+        } finally {
+            await timeMachine.revertToSnapshot(snapshotId);
+        }
     })
 
     it("Should reject to claim rank with smaller than 1 day term", async () => {
