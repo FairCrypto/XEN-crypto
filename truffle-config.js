@@ -32,7 +32,7 @@ module.exports = {
     }
   },
   mocha: {
-    // timeout: 100000
+    timeout: 100_000
   },
   compilers: {
     solc: {
