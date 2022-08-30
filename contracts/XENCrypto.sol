@@ -295,7 +295,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         emit Staked(_msgSender(), stakedReward, term);
     }
 
-     /**
+    /**
      * @dev initiates XEN Stake in amount for a term (days)
      */
     function stake(uint256 amount, uint256 term) external {
