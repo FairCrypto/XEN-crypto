@@ -153,6 +153,19 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         }
     }
 
+    /**
+     * @dev calculates Reward Amplifier
+     */
+    function _createStake(uint256 amount, uint256 term) private {
+        userStakes[_msgSender()] = StakeInfo({
+            term: term,
+            maturityTs: block.timestamp + term * SECONDS_IN_DAY,
+            amount: amount
+        });
+        activeStakes++;
+        totalXenStaked += amount;
+    }
+
     // PUBLIC CONVENIENCE GETTERS
 
     /**
@@ -246,6 +259,43 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     /**
+     * @dev  ends Rank Stake upon maturity (and within permitted Withdrawal time Window)
+     *       mints XEN coins and stakes 'pct' of it for 'term'
+     */
+    function claimMintRewardAndStake(uint256 pct, uint256 term) external {
+        MintInfo memory mintInfo = userMints[_msgSender()];
+        // require(pct > 0, "CRank: Cannot share zero percent");
+        require(pct < 101, "CRank: Cannot share >100 percent");
+        require(mintInfo.rank > 0, "CRank: No stake exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+
+        // calculate reward
+        uint256 rewardAmount = _calculateMintReward(
+            mintInfo.rank,
+            mintInfo.term,
+            mintInfo.maturityTs,
+            mintInfo.amplifier
+        );
+        uint256 stakedReward = (rewardAmount * pct) / 100;
+        uint256 ownReward = rewardAmount - stakedReward;
+
+        // mint reward tokens part
+        _mint(_msgSender(), ownReward);
+        _cleanUpStake(mintInfo.rank);
+        emit MintClaimed(_msgSender(), rewardAmount);
+
+        // nothing to burn since we haven't minted this part yet
+        // stake extra tokens part
+        require(stakedReward > XEN_MIN_STAKE, "XEN: Below min stake");
+        require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min term");
+        require(term * SECONDS_IN_DAY < MAX_TERM_END, "XEN: Above max term");
+        require(userStakes[_msgSender()].amount == 0, "XEN: stake exists");
+
+        _createStake(stakedReward, term);
+        emit Staked(_msgSender(), stakedReward, term);
+    }
+
+     /**
      * @dev initiates XEN Stake in amount for a term (days)
      */
     function stake(uint256 amount, uint256 term) external {
@@ -255,17 +305,10 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         require(term * SECONDS_IN_DAY < MAX_TERM_END, "XEN: Above max term");
         require(userStakes[_msgSender()].amount == 0, "XEN: stake exists");
 
-        // create XEN Stake
-        userStakes[_msgSender()] = StakeInfo({
-            term: term,
-            maturityTs: block.timestamp + term * SECONDS_IN_DAY,
-            amount: amount
-        });
-        activeStakes++;
-        totalXenStaked += amount;
-
         // burn staked XEN
         _burn(_msgSender(), amount);
+        // create XEN Stake
+        _createStake(amount, term);
         emit Staked(_msgSender(), amount, term);
     }
 
