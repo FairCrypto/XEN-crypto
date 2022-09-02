@@ -1,6 +1,6 @@
 {
-  "name": "xen-crypto",
-  "version": "0.1.0",
+  "name": "@faircrypto/xen-crypto",
+  "version": "0.1.5",
   "description": "XEN Crypto",
   "main": "truffle-config.js",
   "directories": {
@@ -12,7 +12,8 @@
     "lint": "npm run lint:sol",
     "lint:fix": "npm run lint:sol:fix",
     "lint:sol": "solhint 'contracts/**/*.sol' && prettier -c 'contracts/**/*.sol'",
-    "lint:sol:fix": "prettier --write \"contracts/**/*.sol\""
+    "lint:sol:fix": "prettier --write \"contracts/**/*.sol\"",
+    "publish": "npm publish --access public"
   },
   "keywords": [
     "Fair Crypto Foundation",
@@ -34,5 +35,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3"
-  }
+  },
+  "files": [
+    "/build/contracts/*.json",
+    "/contracts/**/*.sol"
+  ]
 }
