@@ -32,8 +32,8 @@ contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
             // balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
             globalRank = await token.globalRank().then(_ => _.toNumber())
             rankDelta = (globalRank - genesisRank)
-            expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
-            console.log(expectedRewardAmount)
+            expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term * 1.1)
+            // console.log(expectedRewardAmount)
         } catch (e) {
             console.error(e)
         }

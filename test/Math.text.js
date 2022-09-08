@@ -9,7 +9,7 @@ const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
 
 const MAX_UINT256 = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
-contract("Math", async accounts => {
+contract("Math (takes long time for Log2 function)", async accounts => {
 
     let math
 
