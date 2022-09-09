@@ -258,7 +258,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     /**
-     * @dev ends minting upon maturity (and within permitted Withdrawal time Window), gets minted XEN
+     * @dev ends minting upon maturity (and within permitted Withdrawal Time Window), gets minted XEN
      */
     function claimMintReward() external {
         MintInfo memory mintInfo = userMints[_msgSender()];
