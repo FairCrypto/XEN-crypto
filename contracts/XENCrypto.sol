@@ -16,6 +16,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 maturityTs;
         uint256 rank;
         uint256 amplifier;
+        uint256 eaaRate;
     }
 
     // INTERNAL TYPE TO DESCRIBE A XEN STAKE
@@ -23,18 +24,18 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 term;
         uint256 maturityTs;
         uint256 amount;
+        uint256 apy;
     }
 
     // PUBLIC CONSTANTS
 
     uint256 public constant SECONDS_IN_DAY = 3_600 * 24;
-    uint256 public constant SECONDS_IN_WEEK = 3_600 * 24 * 7;
     uint256 public constant SECONDS_IN_MONTH = 3_600 * 24 * 30;
     uint256 public constant DAYS_IN_YEAR = 365;
 
     uint256 public constant GENESIS_RANK = 21;
 
-    uint256 public constant MIN_TERM = 1 * SECONDS_IN_DAY;
+    uint256 public constant MIN_TERM = 1 * SECONDS_IN_DAY - 1;
     uint256 public constant MAX_TERM_START = 100 * SECONDS_IN_DAY;
     uint256 public constant MAX_TERM_END = 1_000 * SECONDS_IN_DAY;
     uint256 public constant TERM_AMPLIFIER = 15;
@@ -42,11 +43,16 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant REWARD_AMPLIFIER_START = 3_000;
     uint256 public constant REWARD_AMPLIFIER_END = 300;
     uint256 public constant REWARD_AMPLIFIER_STEP = 45;
+    uint256 public constant EAA_PM_START = 100;
+    uint256 public constant EAA_PM_STEP = 1;
+    uint256 public constant EAA_RANK_STEP = 100_000;
 
     uint256 public constant XEN_MIN_STAKE = 0;
     uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
 
-    uint256 public constant XEN_APR = 20;
+    uint256 public constant XEN_APY_START = 20;
+    uint256 public constant XEN_APY_DAYS_STEP = 90;
+    uint256 public constant XEN_APY_END = 2;
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
@@ -108,14 +114,15 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 cRank,
         uint256 term,
         uint256 maturityTs,
-        uint256 amplifier
+        uint256 amplifier,
+        uint256 eeaRate
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
         uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
         uint256 rankDelta = Math.max(globalRank - cRank, 2);
-        uint256 reward = rankDelta.log2() * amplifier * term;
-        uint256 adjustedReward = reward / activeMinters.log2();
-        return (adjustedReward * (128 - penalty)) >> 7;
+        uint256 EAA = (1_000 + eeaRate);
+        uint256 reward = (rankDelta.log2() * amplifier * term * EAA) / 1_000;
+        return (reward * (128 - penalty)) >> 7;
     }
 
     /**
@@ -133,10 +140,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     function _calculateStakeReward(
         uint256 amount,
         uint256 term,
-        uint256 maturityTs
+        uint256 maturityTs,
+        uint256 apy
     ) private view returns (uint256) {
         if (block.timestamp > maturityTs) {
-            return (amount * XEN_APR * term) / (DAYS_IN_YEAR * 100);
+            return (amount * apy * term) / (DAYS_IN_YEAR * 100);
         }
         return 0;
     }
@@ -154,13 +162,33 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     /**
+     * @dev calculates Early Adopter Amplifier Rate (in 1/000ths)
+     *      actual EAA is (1_000 + EAAR) / 1_000
+     */
+    function _calculateEAARate() private view returns (uint256) {
+        uint256 decrease = (EAA_PM_STEP * globalRank) / EAA_RANK_STEP;
+        if (decrease > EAA_PM_START) return 0;
+        return EAA_PM_START - decrease;
+    }
+
+    /**
+     * @dev calculates APY (in %)
+     */
+    function _calculateAPY() private view returns (uint256) {
+        uint256 decrease = (block.timestamp - genesisTs) / (SECONDS_IN_DAY * XEN_APY_DAYS_STEP);
+        if (XEN_APY_START - XEN_APY_END < decrease) return XEN_APY_END;
+        return XEN_APY_START - decrease;
+    }
+
+    /**
      * @dev calculates Reward Amplifier
      */
     function _createStake(uint256 amount, uint256 term) private {
         userStakes[_msgSender()] = StakeInfo({
             term: term,
             maturityTs: block.timestamp + term * SECONDS_IN_DAY,
-            amount: amount
+            amount: amount,
+            apy: _calculateAPY()
         });
         activeStakes++;
         totalXenStaked += amount;
@@ -182,6 +210,27 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         return userStakes[_msgSender()];
     }
 
+    /**
+     * @dev returns current AMP
+     */
+    function getCurrentAMP() external view returns (uint256) {
+        return _calculateRewardAmplifier();
+    }
+
+    /**
+     * @dev returns current EAAR
+     */
+    function getCurrentEAAR() external view returns (uint256) {
+        return _calculateEAARate();
+    }
+
+    /**
+     * @dev returns current APY
+     */
+    function getCurrentAPY() external view returns (uint256) {
+        return _calculateAPY();
+    }
+
     // PUBLIC STATE-CHANGING METHODS
 
     /**
@@ -199,7 +248,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             term: term,
             maturityTs: block.timestamp + termSec,
             rank: globalRank,
-            amplifier: _calculateRewardAmplifier()
+            amplifier: _calculateRewardAmplifier(),
+            eaaRate: _calculateEAARate()
         });
         userMints[_msgSender()] = mintInfo;
         mintsByRank[globalRank] = mintInfo;
@@ -220,7 +270,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             mintInfo.rank,
             mintInfo.term,
             mintInfo.maturityTs,
-            mintInfo.amplifier
+            mintInfo.amplifier,
+            mintInfo.eaaRate
         );
         _mint(_msgSender(), rewardAmount);
 
@@ -245,7 +296,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             mintInfo.rank,
             mintInfo.term,
             mintInfo.maturityTs,
-            mintInfo.amplifier
+            mintInfo.amplifier,
+            mintInfo.eaaRate
         );
         uint256 sharedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - sharedReward;
@@ -274,7 +326,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             mintInfo.rank,
             mintInfo.term,
             mintInfo.maturityTs,
-            mintInfo.amplifier
+            mintInfo.amplifier,
+            mintInfo.eaaRate
         );
         uint256 stakedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - stakedReward;
@@ -319,7 +372,12 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         StakeInfo memory userStake = userStakes[_msgSender()];
         require(userStake.amount > 0, "XEN: no stake exists");
 
-        uint256 xenReward = _calculateStakeReward(userStake.amount, userStake.term, userStake.maturityTs);
+        uint256 xenReward = _calculateStakeReward(
+            userStake.amount,
+            userStake.term,
+            userStake.maturityTs,
+            userStake.apy
+        );
         activeStakes--;
         totalXenStaked -= userStake.amount;
 

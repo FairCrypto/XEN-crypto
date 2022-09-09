@@ -181,7 +181,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const rankDelta = (globalRank - genesisRank)
-        const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term)
+        const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term * 1.1)
         await assert.doesNotReject(() => {
             return token.claimMintRewardAndShare(accounts[3], 50, {from: accounts[1]})
                 .then(result => {
