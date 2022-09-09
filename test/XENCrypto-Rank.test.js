@@ -9,7 +9,6 @@ const XENCrypto = artifacts.require("XENCrypto")
 
 const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
 
-
 contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
     const genesisRank = 21
@@ -23,11 +22,6 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         } catch (e) {
             console.error(e)
         }
-    })
-
-    it("Should read basic ERC-20 params", async () => {
-        assert.ok(await token.name() === 'XEN Crypto')
-        assert.ok(await token.symbol() === 'XEN')
     })
 
     it("Should start stake IDs (ranks) with number 21", async () => {

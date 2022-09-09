@@ -41,8 +41,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant TERM_AMPLIFIER = 15;
     uint256 public constant TERM_AMPLIFIER_THRESHOLD = 5_000;
     uint256 public constant REWARD_AMPLIFIER_START = 3_000;
-    uint256 public constant REWARD_AMPLIFIER_END = 300;
-    uint256 public constant REWARD_AMPLIFIER_STEP = 45;
+    uint256 public constant REWARD_AMPLIFIER_END = 1;
+    uint256 public constant REWARD_AMPLIFIER_STEP = 30;
     uint256 public constant EAA_PM_START = 100;
     uint256 public constant EAA_PM_STEP = 1;
     uint256 public constant EAA_RANK_STEP = 100_000;
@@ -258,7 +258,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     /**
-     * @dev ends minting upon maturity (and within permitted Withdrawal time Window), gets minted XEN
+     * @dev ends minting upon maturity (and within permitted Withdrawal Time Window), gets minted XEN
      */
     function claimMintReward() external {
         MintInfo memory mintInfo = userMints[_msgSender()];
