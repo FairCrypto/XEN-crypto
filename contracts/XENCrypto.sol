@@ -141,8 +141,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 apy
     ) private view returns (uint256) {
         if (block.timestamp > maturityTs) {
-            uint256 rate = apy * term * 1_000_000 / DAYS_IN_YEAR;
-            return amount * rate / 100_000_000 ;
+            uint256 rate = (apy * term * 1_000_000) / DAYS_IN_YEAR;
+            return (amount * rate) / 100_000_000;
         }
         return 0;
     }
@@ -295,7 +295,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
             mintInfo.maturityTs,
             mintInfo.amplifier,
             mintInfo.eaaRate
-        )  * 1 ether;
+        ) * 1 ether;
         uint256 sharedReward = (rewardAmount * pct) / 100;
         uint256 ownReward = rewardAmount - sharedReward;
 
