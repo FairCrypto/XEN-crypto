@@ -7,7 +7,7 @@ const timeMachine = require('ganache-time-traveler');
 
 const XENCrypto = artifacts.require("XENCrypto")
 
-const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
+const { bn2hexStr, toBigInt, maxBigInt, etherToWei } = require('../src/utils.js')
 
 contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
@@ -175,7 +175,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
         const globalRank = await token.globalRank().then(_ => _.toNumber())
         const rankDelta = (globalRank - genesisRank)
-        const expectedRewardAmount = Math.round(Math.log2(rankDelta) * 3000 * term * 1.1)
+        const expectedRewardAmount = BigInt(Math.floor(Math.log2(rankDelta)* 3_000 * term * 1.1)) * etherToWei
         await assert.doesNotReject(() => {
             return token.claimMintRewardAndShare(accounts[3], 50, {from: accounts[1]})
                 .then(result => {
@@ -192,7 +192,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
                         (event) => {
                             return event.to === accounts[1]
                                 && event.from === '0x0000000000000000000000000000000000000000'
-                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2n)
                         })
                     truffleAssert.eventEmitted(
                         result,
@@ -200,12 +200,12 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
                         (event) => {
                             return event.to === accounts[3]
                                 && event.from === '0x0000000000000000000000000000000000000000'
-                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2)
+                                && BigInt(bn2hexStr(event.value)) === BigInt(expectedRewardAmount/2n)
                         })
                 })
                 //.catch(console.log)
         })
-        assert.ok(expectedRewardAmount === await token.totalSupply().then(_ => _.toNumber()))
+        assert.ok(expectedRewardAmount === await token.totalSupply().then(toBigInt))
     })
 
     it("Should return user MintInfo", async() => {
