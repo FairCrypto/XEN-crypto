@@ -30,7 +30,8 @@ contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
             await assert.doesNotReject(() => token.claimRank(mintTerm, {from: accounts[2]})) // create rankDelta > 0
             //await timeMachine.advanceTime(term * 24 * 3600 + 1)
             const twoDays = mintTerm * 24 * 3600
-            await timeMachine.advanceTimeAndBlock( twoDays + 3600)
+            await timeMachine.advanceTime( twoDays + 3600)
+            await timeMachine.advanceBlock()
             // await assert.doesNotReject(() => token.claimMintReward({from: accounts[1]}))
             // balance = await token.balanceOf(accounts[1], {from: accounts[1]}).then(_ => _.toNumber())
             globalRank = await token.globalRank().then(_ => _.toNumber())
