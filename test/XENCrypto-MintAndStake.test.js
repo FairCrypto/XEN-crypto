@@ -146,7 +146,7 @@ contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
     })
 
     it("Should allow to withdraw stake after maturity with positive reward", async () => {
-        await timeMachine.advanceTimeAndBlock(stakeTerm * 24 * 3600 + 1)
+        await timeMachine.advanceTimeAndBlock(stakeTerm * 24 * 3600 + 3600)
         const rate = (BigInt(stakeTerm) * 20n * 1_000_000n) / 365n
         const expectedAPYReward = ((expectedRewardAmount / 4n) * rate) / 100_000_000n
         await assert.doesNotReject(() => {
