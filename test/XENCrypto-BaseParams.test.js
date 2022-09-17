@@ -11,7 +11,7 @@ const { bn2hexStr, toBigInt, maxBigInt, etherToWei } = require('../src/utils.js'
 contract("XEN Crypto (Base Params)", async accounts => {
 
     const genesisRank = 21
-    const expectedInitialAMP = 3_000n
+    const expectedInitialAMP = 3_000
     const expectedInitialEEAR = 100
     const expectedInitialAPY = 20
     let token
@@ -37,7 +37,7 @@ contract("XEN Crypto (Base Params)", async accounts => {
     })
 
     it("Should return correct initial AMP", async () => {
-        assert.ok(await token.getCurrentAMP().then(toBigInt) === expectedInitialAMP)
+        assert.ok(await token.getCurrentAMP().then(_ => _.toNumber()) === expectedInitialAMP)
     })
 
     it("Should return correct initial EAA Rate", async () => {
@@ -53,15 +53,15 @@ contract("XEN Crypto (Base Params)", async accounts => {
         const snapshotId = snapshot['result'];
         const deltaTs = 3600 * 24 * 30 * 12
         const expectedAMP =
-            maxBigInt(
-                expectedInitialAMP - (30n * BigInt(deltaTs) / (3600n * 24n * 30n)),
-                1n
+            Math.max(
+                expectedInitialAMP - (30 * deltaTs) / (3600 * 24 * 30),
+                1
             )
         // console.log(expectedAMP)
         try {
             // const genesisTs = await token.genesisTs().then(_ => _.toNumber())
             await timeMachine.advanceBlockAndSetTime(genesisTs + deltaTs)
-            assert.ok(await token.getCurrentAMP().then(toBigInt) === expectedAMP)
+            assert.ok(await token.getCurrentAMP().then(_ => _.toNumber()) === expectedAMP)
         } catch (err) {
             // console.log(err)
             throw(err)
@@ -77,12 +77,12 @@ contract("XEN Crypto (Base Params)", async accounts => {
         try {
             const deltaTs = 3600 * 24 * 30 * 101
             const expectedTerminalAMP =
-                maxBigInt(
-                    expectedInitialAMP - 30n * (BigInt(deltaTs) / (3600n * 24n * 30n)),
-                    1n
+                Math.max(
+                    expectedInitialAMP - 30 * deltaTs / (3600 * 24 * 30),
+                    1
                 )
             await timeMachine.advanceBlockAndSetTime(genesisTs + deltaTs)
-            assert.ok(await token.getCurrentAMP().then(toBigInt) === expectedTerminalAMP)
+            assert.ok(await token.getCurrentAMP().then(_ => _.toNumber()) === expectedTerminalAMP)
         } catch (err) {
             throw(err)
         } finally {
@@ -124,6 +124,17 @@ contract("XEN Crypto (Base Params)", async accounts => {
         } finally {
             await timeMachine.revertToSnapshot(snapshotId);
         }
+    })
+
+    it("Should correctly calculate gross mint reward", async () => {
+        // (uint256 rankDelta, uint256 amplifier, uint256 term, uint256 EAA)
+        const term = 1
+        const delta = 125
+        const eaa = Math.floor((1 + (expectedInitialEEAR / 1_000)) * 1000)
+        const reward = await token.getGrossReward(delta, expectedInitialAMP, term, eaa).then(_ => _.toNumber())
+        const expectedReward =
+            Math.floor(term * Math.log2(Math.max(delta, 2)) * expectedInitialAMP * (1 + expectedInitialEEAR/1_000));
+        assert.ok(reward === expectedReward)
     })
 
 })
