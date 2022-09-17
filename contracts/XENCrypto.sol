@@ -3,11 +3,14 @@ pragma solidity ^0.8.10;
 
 import "./Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "abdk-libraries-solidity/ABDKMath64x64.sol";
 import "./interfaces/IStakingToken.sol";
 import "./interfaces/IRankedMintingToken.sol";
 
 contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Crypto", "XEN") {
     using Math for uint256;
+    using ABDKMath64x64 for int128;
+    using ABDKMath64x64 for uint256;
 
     // INTERNAL TYPE TO DESCRIBE A RANK STAKE
     struct MintInfo {
@@ -81,7 +84,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     function _addStakeAndAdjustMaxTerm() private {
         activeMinters++;
         if (activeMinters > TERM_AMPLIFIER_THRESHOLD) {
-            uint256 newMax = MIN_TERM + globalRank.log2() * TERM_AMPLIFIER;
+            uint256 delta = globalRank.fromUInt().log_2().mul(TERM_AMPLIFIER.fromUInt()).toUInt();
+            uint256 newMax = MIN_TERM + delta;
             if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
                 currentMaxTerm = newMax;
             }
@@ -92,7 +96,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
      * @dev calculates Stake Withdrawal Window based on Mint Term
      */
     function _withdrawalWindow(uint256 term) private pure returns (uint256) {
-        return (term * SECONDS_IN_DAY).log2();
+        return (term * SECONDS_IN_DAY).fromUInt().log_2().toUInt();
     }
 
     /**
@@ -119,7 +123,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
         uint256 rankDelta = Math.max(globalRank - cRank, 2);
         uint256 EAA = (1_000 + eeaRate);
-        uint256 reward = (rankDelta.log2() * amplifier * term * EAA) / 1_000;
+        uint256 reward = getGrossReward(rankDelta, amplifier, term, EAA);
         return (reward * (128 - penalty)) >> 7;
     }
 
@@ -193,6 +197,20 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     // PUBLIC CONVENIENCE GETTERS
+
+    /**
+     * @dev calculates gross Mint Reward
+     */
+    function getGrossReward(
+        uint256 rankDelta,
+        uint256 amplifier,
+        uint256 term,
+        uint256 EAA
+    ) public pure returns (uint256) {
+        int128 log128 = rankDelta.fromUInt().log_2();
+        int128 reward128 = log128.mul(amplifier.fromUInt()).mul(term.fromUInt()).mul(EAA.fromUInt());
+        return reward128.div(uint256(1_000).fromUInt()).toUInt();
+    }
 
     /**
      * @dev returns Rank Stake object associated with User account address

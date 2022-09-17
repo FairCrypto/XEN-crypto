@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "abdk-libraries-solidity/ABDKMath64x64.sol";
+
+// import "abdk-libraries-solidity/ABDKMathQuad.sol";
+
 library Math {
     /*
         Source: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
         Author: https://ethereum.stackexchange.com/users/131/tjaden-hess
     */
+    /*
     function log2(uint256 x) external pure returns (uint256 y) {
         assembly {
             let arg := x
@@ -36,6 +41,7 @@ library Math {
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
     }
+    */
 
     function min(uint256 a, uint256 b) external pure returns (uint256) {
         if (a > b) return b;
@@ -45,5 +51,9 @@ library Math {
     function max(uint256 a, uint256 b) external pure returns (uint256) {
         if (a > b) return a;
         return b;
+    }
+
+    function logX64(uint256 x) external pure returns (int128) {
+        return ABDKMath64x64.log_2(ABDKMath64x64.fromUInt(x));
     }
 }

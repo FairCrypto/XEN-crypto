@@ -9,7 +9,7 @@ const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
 
 const MAX_UINT256 = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
-contract("Math (takes long time for Log2 function)", async accounts => {
+contract("Math Functions", async accounts => {
 
     let math
 
@@ -21,7 +21,7 @@ contract("Math (takes long time for Log2 function)", async accounts => {
         }
     })
 
-    const Log2 = (x) => math && math.log2(x).then(_ => _.toNumber())
+    // const Log2 = (x) => math && math.log2(x).then(_ => _.toNumber())
     const Min = (x,y) => math && math.min(x, y).then(_ => _.toNumber())
     const MinN = (x,y) => math && math.min(x, y).then(bn2hexStr).then(BigInt)
     const Max = (x,y) => math && math.max(x, y).then(_ => _.toNumber())
@@ -43,6 +43,7 @@ contract("Math (takes long time for Log2 function)", async accounts => {
         assert.ok(await MaxN(MAX_UINT256,0) === BigInt(MAX_UINT256))
     })
 
+    /*
     it("Function log2(x) shall return expected result for sequential x=1...1000", async () => {
         for await (const i of new Array(1000).fill(null).map((_,i) => i + 1)) {
             const res = await Log2(i)
@@ -59,5 +60,6 @@ contract("Math (takes long time for Log2 function)", async accounts => {
             //
         }
     })
+    */
 
 })
