@@ -57,6 +57,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant XEN_APY_DAYS_STEP = 90;
     uint256 public constant XEN_APY_END = 2;
 
+    string public constant authors = "@MrJackLevin @lbelyaev faircrypto.org ";
+
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
     uint256 public genesisTs;

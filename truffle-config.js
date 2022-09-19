@@ -8,7 +8,6 @@ const liveNetworkPK = process.env.LIVE_PK || ''
 const privKeysRinkeby = [ liveNetworkPK ]
 
 module.exports = {
-
   networks: {
     ganache: {
       host: "127.0.0.1",
@@ -38,6 +37,19 @@ module.exports = {
         pollingInterval: 56000
       }),
       network_id: 5,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
+    pulsechain_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://rpc.v2b.testnet.pulsechain.com`,
+        pollingInterval: 56000
+      }),
+      network_id: 941,
       confirmations: 2,
       timeoutBlocks: 100,
       skipDryRun: true,
