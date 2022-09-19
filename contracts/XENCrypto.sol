@@ -57,7 +57,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant XEN_APY_DAYS_STEP = 90;
     uint256 public constant XEN_APY_END = 2;
 
-    string public constant authors = "@MrJackLevin @lbelyaev faircrypto.org ";
+    string public constant AUTHORS = "@MrJackLevin @lbelyaev faircrypto.org ";
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
@@ -207,10 +207,10 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 rankDelta,
         uint256 amplifier,
         uint256 term,
-        uint256 EAA
+        uint256 eaa
     ) public pure returns (uint256) {
         int128 log128 = rankDelta.fromUInt().log_2();
-        int128 reward128 = log128.mul(amplifier.fromUInt()).mul(term.fromUInt()).mul(EAA.fromUInt());
+        int128 reward128 = log128.mul(amplifier.fromUInt()).mul(term.fromUInt()).mul(eaa.fromUInt());
         return reward128.div(uint256(1_000).fromUInt()).toUInt();
     }
 
