@@ -12,8 +12,7 @@
     "lint": "npm run lint:sol",
     "lint:fix": "npm run lint:sol:fix",
     "lint:sol": "solhint 'contracts/**/*.sol' && prettier -c 'contracts/**/*.sol'",
-    "lint:sol:fix": "prettier --write \"contracts/**/*.sol\"",
-    "publish": "npm publish --access public"
+    "lint:sol:fix": "prettier --write \"contracts/**/*.sol\""
   },
   "keywords": [
     "Fair Crypto Foundation",
