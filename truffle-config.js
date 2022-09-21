@@ -43,6 +43,19 @@ module.exports = {
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
     },
+    bsc_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+        pollingInterval: 56000
+      }),
+      network_id: 97,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      skipDryRun: true,
+      networkCheckTimeout: 999999
+    },
     pulsechain_testnet: {
       provider: () => new HDWalletProvider({
         privateKeys: privKeysRinkeby,
