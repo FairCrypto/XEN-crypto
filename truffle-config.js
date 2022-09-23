@@ -68,6 +68,19 @@ module.exports = {
       skipDryRun: true,
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
+    },
+    ethw_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://iceberg.ethereumpow.org/`,
+        pollingInterval: 56000
+      }),
+      network_id: 10002,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
     }
   },
   mocha: {
