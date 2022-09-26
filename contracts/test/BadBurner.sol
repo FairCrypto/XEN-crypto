@@ -10,20 +10,13 @@ import "../interfaces/IBurnableToken.sol";
     This contract implements IBurnRedeemable but tries to make reentrant burn call to XENCrypto
  */
 contract BadBurner is Context, IBurnRedeemable, IERC165, ERC20("Bad Burner", "BAD") {
-
     IBurnableToken public xenContract;
 
     constructor(address _xenContractAddress) {
         xenContract = IBurnableToken(_xenContractAddress);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IBurnRedeemable).interfaceId;
     }
 
@@ -31,8 +24,7 @@ contract BadBurner is Context, IBurnRedeemable, IERC165, ERC20("Bad Burner", "BA
         xenContract.burn(_msgSender(), amount);
     }
 
-    function onTokenBurned(address user, uint256 amount) public {
+    function onTokenBurned(address, uint256 amount) public {
         xenContract.burn(_msgSender(), amount);
     }
-
 }

@@ -7,20 +7,13 @@ import "../interfaces/IBurnRedeemable.sol";
 import "../interfaces/IBurnableToken.sol";
 
 contract Burner is Context, IBurnRedeemable, IERC165, ERC20("Burner", "BURN") {
-
     IBurnableToken public xenContract;
 
     constructor(address _xenContractAddress) {
         xenContract = IBurnableToken(_xenContractAddress);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IBurnRedeemable).interfaceId;
     }
 
@@ -29,12 +22,10 @@ contract Burner is Context, IBurnRedeemable, IERC165, ERC20("Burner", "BURN") {
     }
 
     function onTokenBurned(address user, uint256 amount) public {
-        require(_msgSender() == address(xenContract), 'Burner: wrong caller');
+        require(_msgSender() == address(xenContract), "Burner: wrong caller");
         require(user != address(0), "Burner: zero user address");
         require(amount != 0, "Burner: zero amount");
 
         _mint(user, amount);
     }
-
-
 }

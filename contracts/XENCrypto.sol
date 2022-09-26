@@ -415,7 +415,10 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
      */
     function burn(address user, uint256 amount) public {
         require(amount > XEN_MIN_BURN, "Burn: Below min limit");
-        require(IERC165(_msgSender()).supportsInterface(type(IBurnRedeemable).interfaceId), 'Burn: not a supported contract');
+        require(
+            IERC165(_msgSender()).supportsInterface(type(IBurnRedeemable).interfaceId),
+            "Burn: not a supported contract"
+        );
 
         _spendAllowance(user, _msgSender(), amount);
         _burn(user, amount);
