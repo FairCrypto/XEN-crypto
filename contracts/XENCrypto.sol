@@ -49,6 +49,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant EAA_PM_START = 100;
     uint256 public constant EAA_PM_STEP = 1;
     uint256 public constant EAA_RANK_STEP = 100_000;
+    uint256 public constant WITHDRAWAL_WINDOW_DAYS = 7;
 
     uint256 public constant XEN_MIN_STAKE = 0;
     uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
@@ -100,7 +101,6 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     function _penalty(uint256 secsLate) private pure returns (uint256) {
         // =MIN(2^(daysLate+3)/window-1,100)
         uint256 daysLate = secsLate / SECONDS_IN_DAY;
-        uint256 WITHDRAWAL_WINDOW_DAYS = 7;
         uint256 penalty = (uint256(1) << (daysLate + 3)) / WITHDRAWAL_WINDOW_DAYS - 1;
         return Math.min(penalty, 100);
     }
