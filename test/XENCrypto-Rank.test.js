@@ -15,6 +15,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     let token
     let term = 2
     let expectedStakeId = genesisRank
+    let snapshotId
 
     before(async () => {
         try {
@@ -170,6 +171,9 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     })
 
     it("Should allow to withdraw stake upon maturity with XEN minted", async () => {
+        const snapshot = await timeMachine.takeSnapshot();
+        snapshotId = snapshot['result'];
+
         await timeMachine.advanceTime(3600 * 24 * term + 1);
         await timeMachine.advanceBlock();
 
@@ -223,4 +227,27 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         assert.equal(mintInfo.rank, globalRank)
         assert.ok(mintInfo.maturityTs >= maturityTs)
     })
+
+    it ("Shall progressively decrease reward amount for delay in 1...8 days", async () => {
+        const delaysInDays = [1, 2, 3, 4, 5, 6, 7, 8];
+        const expectedRewardPct = [99n, 97n, 92n, 83n, 65n, 28n, 0n, 0n];
+        for await (const delay of delaysInDays) {
+            await timeMachine.revertToSnapshot(snapshotId);
+            const snapshot = await timeMachine.takeSnapshot();
+            snapshotId = snapshot['result'];
+
+            await timeMachine.advanceTime(3600 * 24 * (term + delay) + 1);
+            await timeMachine.advanceBlock();
+
+            const globalRank = await token.globalRank().then(_ => _.toNumber())
+            const rankDelta = (globalRank - genesisRank)
+            const expectedRewardAmount = BigInt(Math.floor(Math.log2(rankDelta) * 3_000 * term * 1.1)) * etherToWei
+            await assert.doesNotReject(() => token.claimMintReward({from: accounts[1]}));
+
+            const idx = delaysInDays.findIndex(d => d === delay)
+            const expectedNetReward = (await token.totalSupply().then(toBigInt)) * 100n / expectedRewardAmount;
+            assert.ok(expectedNetReward === expectedRewardPct[idx])
+        }
+    })
+
 })
