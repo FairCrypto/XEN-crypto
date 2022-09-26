@@ -95,20 +95,14 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     }
 
     /**
-     * @dev calculates Stake Withdrawal Window based on Mint Term
+     * @dev calculates Withdrawal Penalty depending on lateness
      */
-    function _withdrawalWindow(uint256 term) private pure returns (uint256) {
-        return (term * SECONDS_IN_DAY).fromUInt().log_2().toUInt();
-    }
-
-    /**
-     * @dev calculates Withdrawal Penalty (on 128-point scale) depending on lateness
-     */
-    function _penalty(uint256 window, uint256 secsLate) private pure returns (uint256) {
-        // =MIN(2^(F4*8/window),100)
+    function _penalty(uint256 secsLate) private pure returns (uint256) {
+        // =MIN(2^(daysLate+3)/window-1,100)
         uint256 daysLate = secsLate / SECONDS_IN_DAY;
-        uint256 pwr = (daysLate * 8) / window;
-        return Math.min(uint256(1) << pwr, 128) - 1;
+        uint256 WITHDRAWAL_WINDOW_DAYS = 7;
+        uint256 penalty = (uint256(1) << (daysLate + 3)) / WITHDRAWAL_WINDOW_DAYS - 1;
+        return Math.min(penalty, 100);
     }
 
     /**
@@ -122,11 +116,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         uint256 eeaRate
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
-        uint256 penalty = _penalty(_withdrawalWindow(term), secsLate);
+        uint256 penalty = _penalty(secsLate);
         uint256 rankDelta = Math.max(globalRank - cRank, 2);
         uint256 EAA = (1_000 + eeaRate);
         uint256 reward = getGrossReward(rankDelta, amplifier, term, EAA);
-        return (reward * (128 - penalty)) >> 7;
+        return (reward * (100 - penalty)) / 100;
     }
 
     /**
