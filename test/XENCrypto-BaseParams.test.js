@@ -137,5 +137,14 @@ contract("XEN Crypto (Base Params)", async accounts => {
         assert.ok(reward === expectedReward)
     })
 
+    /*
+    it("Should calculate net reward accounted for penalty", async () => {
+        const daysLate = [0,1,2,3,4,5,6,7,8];
+        for await (const day of daysLate) {
+            console.log('days', day, 'reward', await token.getNetReward(100, day).then(_ => _.toNumber()))
+        }
+    })
+    */
+
 })
 
