@@ -3,11 +3,14 @@ pragma solidity ^0.8.10;
 
 import "./Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC165.sol";
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 import "./interfaces/IStakingToken.sol";
 import "./interfaces/IRankedMintingToken.sol";
+import "./interfaces/IBurnableToken.sol";
+import "./interfaces/IBurnRedeemable.sol";
 
-contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Crypto", "XEN") {
+contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto", "XEN") {
     using Math for uint256;
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
@@ -51,7 +54,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     uint256 public constant EAA_RANK_STEP = 100_000;
 
     uint256 public constant XEN_MIN_STAKE = 0;
-    uint256 public constant XEN_MAX_STAKE = 0; /* Zero means Unlimited Stake Amount */
+
+    uint256 public constant XEN_MIN_BURN = 0;
 
     uint256 public constant XEN_APY_START = 20;
     uint256 public constant XEN_APY_DAYS_STEP = 90;
@@ -71,6 +75,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
     mapping(address => MintInfo) public userMints;
     // user address => XEN stake info
     mapping(address => StakeInfo) public userStakes;
+    // user address => XEN burn amount
+    mapping(address => uint256) public userBurns;
 
     // CONSTRUCTOR
     constructor() {
@@ -402,5 +408,21 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, ERC20("XEN Cr
         _mint(_msgSender(), userStake.amount + xenReward);
         emit Withdrawn(_msgSender(), userStake.amount, xenReward);
         delete userStakes[_msgSender()];
+    }
+
+    /**
+     * @dev burns XEN tokens and creates Proof-Of-Burn record to be used by connected DeFi services
+     */
+    function burn(address user, uint256 amount) public {
+        require(amount > XEN_MIN_BURN, "Burn: Below min limit");
+        require(
+            IERC165(_msgSender()).supportsInterface(type(IBurnRedeemable).interfaceId),
+            "Burn: not a supported contract"
+        );
+
+        _spendAllowance(user, _msgSender(), amount);
+        _burn(user, amount);
+        userBurns[user] += amount;
+        IBurnRedeemable(_msgSender()).onTokenBurned(user, amount);
     }
 }
