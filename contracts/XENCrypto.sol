@@ -36,7 +36,6 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     // PUBLIC CONSTANTS
 
     uint256 public constant SECONDS_IN_DAY = 3_600 * 24;
-    uint256 public constant SECONDS_IN_MONTH = 3_600 * 24 * 30;
     uint256 public constant DAYS_IN_YEAR = 365;
 
     uint256 public constant GENESIS_RANK = 1;
@@ -48,7 +47,6 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public constant TERM_AMPLIFIER_THRESHOLD = 5_000;
     uint256 public constant REWARD_AMPLIFIER_START = 3_000;
     uint256 public constant REWARD_AMPLIFIER_END = 1;
-    uint256 public constant REWARD_AMPLIFIER_STEP = 30;
     uint256 public constant EAA_PM_START = 100;
     uint256 public constant EAA_PM_STEP = 1;
     uint256 public constant EAA_RANK_STEP = 100_000;
@@ -154,7 +152,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
      * @dev calculates Reward Amplifier
      */
     function _calculateRewardAmplifier() private view returns (uint256) {
-        uint256 amplifierDecrease = (REWARD_AMPLIFIER_STEP * (block.timestamp - genesisTs)) / SECONDS_IN_MONTH;
+        uint256 amplifierDecrease = (block.timestamp - genesisTs) / SECONDS_IN_DAY;
         if (amplifierDecrease < REWARD_AMPLIFIER_START) {
             return Math.max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
         } else {
