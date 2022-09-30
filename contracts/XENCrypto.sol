@@ -66,7 +66,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
 
     // PUBLIC STATE, READABLE VIA NAMESAKE GETTERS
 
-    uint256 public genesisTs;
+    uint256 public immutable genesisTs;
     uint256 public globalRank = GENESIS_RANK;
     uint256 public activeMinters;
     uint256 public activeStakes;

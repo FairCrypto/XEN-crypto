@@ -43,6 +43,19 @@ module.exports = {
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
     },
+    bsc_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+        pollingInterval: 56000
+      }),
+      network_id: 97,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      skipDryRun: true,
+      networkCheckTimeout: 999999
+    },
     pulsechain_testnet: {
       provider: () => new HDWalletProvider({
         privateKeys: privKeysRinkeby,
@@ -55,7 +68,35 @@ module.exports = {
       skipDryRun: true,
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
-    }
+    },
+    ethw_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://iceberg.ethereumpow.org/`,
+        pollingInterval: 56000
+      }),
+      network_id: 10002,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
+    mumbai: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://rpc-mumbai.maticvigil.com/v1/53a113316e0a9e20bcf02b13dd504ac33aeea3ba`,
+        pollingInterval: 56000
+      }),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      pollingInterval: 1000,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+      //websockets: true
+    },
   },
   mocha: {
     timeout: 100_000
