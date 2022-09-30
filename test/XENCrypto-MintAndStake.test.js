@@ -11,7 +11,7 @@ const { bn2hexStr, toBigInt, maxBigInt, etherToWei } = require('../src/utils.js'
 
 contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
 
-    const genesisRank = 21
+    const genesisRank = 1
     const maxTerm = 1001
     let token
     let mintTerm = 2 /* days */

@@ -24,7 +24,7 @@ contract RevertingBurner is Context, IBurnRedeemable, IERC165, ERC20("Reverting 
         xenContract.burn(_msgSender(), amount);
     }
 
-    function onTokenBurned(address, uint256) public {
+    function onTokenBurned(address, uint256) public pure {
         revert();
     }
 }

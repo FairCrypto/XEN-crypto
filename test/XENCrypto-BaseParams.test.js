@@ -10,7 +10,7 @@ const { bn2hexStr, toBigInt, maxBigInt, etherToWei } = require('../src/utils.js'
 
 contract("XEN Crypto (Base Params)", async accounts => {
 
-    const genesisRank = 21
+    const genesisRank = 1
     const expectedInitialAMP = 3_000
     const expectedInitialEEAR = 100
     const expectedInitialAPY = 20

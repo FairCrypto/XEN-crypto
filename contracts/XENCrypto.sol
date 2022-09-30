@@ -39,7 +39,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public constant SECONDS_IN_MONTH = 3_600 * 24 * 30;
     uint256 public constant DAYS_IN_YEAR = 365;
 
-    uint256 public constant GENESIS_RANK = 21;
+    uint256 public constant GENESIS_RANK = 1;
 
     uint256 public constant MIN_TERM = 1 * SECONDS_IN_DAY - 1;
     uint256 public constant MAX_TERM_START = 100 * SECONDS_IN_DAY;
@@ -71,7 +71,6 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public activeMinters;
     uint256 public activeStakes;
     uint256 public totalXenStaked;
-    uint256 public currentMaxTerm = MAX_TERM_START;
     // user address => XEN mint info
     mapping(address => MintInfo) public userMints;
     // user address => XEN stake info
@@ -87,18 +86,16 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     // PRIVATE METHODS
 
     /**
-     * @dev increases Active Stakes, recalculates and saves new MaxTerm
-     *      (if over TERM_AMPLIFIER_THRESHOLD)
+     * @dev calculates current MaxTerm based on GlobalTank
+     *      (if GlobalTank crosses over TERM_AMPLIFIER_THRESHOLD)
      */
-    function _addStakeAndAdjustMaxTerm() private {
-        activeMinters++;
-        if (activeMinters > TERM_AMPLIFIER_THRESHOLD) {
+    function _calculateMaxTerm() private view returns (uint256) {
+        if (globalRank > TERM_AMPLIFIER_THRESHOLD) {
             uint256 delta = globalRank.fromUInt().log_2().mul(TERM_AMPLIFIER.fromUInt()).toUInt();
             uint256 newMax = MIN_TERM + delta;
-            if (newMax > currentMaxTerm && newMax < MAX_TERM_END) {
-                currentMaxTerm = newMax;
-            }
+            return Math.min(newMax, MAX_TERM_END);
         }
+        return MAX_TERM_START;
     }
 
     /**
@@ -257,7 +254,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     function claimRank(uint256 term) external {
         uint256 termSec = term * SECONDS_IN_DAY;
         require(termSec > MIN_TERM, "CRank: Term less than min");
-        require(termSec < currentMaxTerm + 1, "CRank: Term more than current max term");
+        require(termSec < _calculateMaxTerm() + 1, "CRank: Term more than current max term");
         require(userMints[_msgSender()].rank == 0, "CRank: Stake exists");
 
         // create and store new MintInfo
@@ -270,7 +267,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
             eaaRate: _calculateEAARate()
         });
         userMints[_msgSender()] = mintInfo;
-        _addStakeAndAdjustMaxTerm();
+        activeMinters++;
         emit RankClaimed(_msgSender(), term, globalRank++);
     }
 
