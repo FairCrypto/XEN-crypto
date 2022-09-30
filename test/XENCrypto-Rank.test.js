@@ -77,7 +77,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
                 token.claimMintReward({from: accounts[6]}),
-                "CRank: Stake maturity not reached"
+                "CRank: Mint maturity not reached"
             )
         } catch (err) {
             throw(err)
@@ -111,7 +111,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
             await token.claimRank(5, {from: accounts[6]})
             await truffleAssert.fails(
                 token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
-                "CRank: Stake maturity not reached"
+                "CRank: Mint maturity not reached"
             )
         } catch (err) {
             throw(err)
@@ -123,7 +123,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     it("Should reject to claim rank reward and share when no stake exists", async () => {
         await truffleAssert.fails(
             token.claimMintRewardAndShare(accounts[7], 50, {from: accounts[6]}),
-            "CRank: No stake exists"
+            "CRank: No mint exists"
         )
     })
 
