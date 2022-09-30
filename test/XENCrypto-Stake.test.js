@@ -35,14 +35,14 @@ contract("XEN Crypto (XEN Staking)", async accounts => {
     it('Should not allow stake when term is less than 1 minute', async () => {
         await truffleAssert.fails(
             token.stake(balance / 2n, 0, {from: accounts[1]}),
-            'XEN: Below min term',
+            'XEN: Below min stake term',
         )
     })
 
     it('Should not allow stake when term is greater than 1000 days', async () => {
         await truffleAssert.fails(
             token.stake(balance / 2n, maxTerm, {from: accounts[1]}),
-            'XEN: Above max term',
+            'XEN: Above max stake term',
         )
     })
 

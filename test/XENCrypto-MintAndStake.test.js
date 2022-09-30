@@ -50,7 +50,7 @@ contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
     it('Should not allow mint+stake when there is no active mint record', async () => {
         await truffleAssert.fails(
             token.claimMintRewardAndStake(sharePct, 10, {from: accounts[3]}),
-            'CRank: No stake exists',
+            'CRank: No mint exists',
         )
     })
 
@@ -64,14 +64,14 @@ contract("XEN Crypto (XEN Mint+Stake)", async accounts => {
     it('Should not allow mint+stake when term is Zero', async () => {
         await truffleAssert.fails(
             token.claimMintRewardAndStake(sharePct, 0, {from: accounts[1]}),
-            'XEN: Below min term',
+            'XEN: Below min stake term',
         )
     })
 
     it('Should not allow mint+stake when term is greater than 1000 days', async () => {
         await truffleAssert.fails(
             token.claimMintRewardAndStake(sharePct, maxTerm, {from: accounts[1]}),
-            'XEN: Above max term',
+            'XEN: Above max stake term',
         )
     })
 

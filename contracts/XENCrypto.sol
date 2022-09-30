@@ -233,7 +233,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     }
 
     /**
-     * @dev returns current EAAR
+     * @dev returns current EAA Rate
      */
     function getCurrentEAAR() external view returns (uint256) {
         return _calculateEAARate();
@@ -255,7 +255,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         uint256 termSec = term * SECONDS_IN_DAY;
         require(termSec > MIN_TERM, "CRank: Term less than min");
         require(termSec < _calculateMaxTerm() + 1, "CRank: Term more than current max term");
-        require(userMints[_msgSender()].rank == 0, "CRank: Stake exists");
+        require(userMints[_msgSender()].rank == 0, "CRank: Mint already in progress");
 
         // create and store new MintInfo
         MintInfo memory mintInfo = MintInfo({
@@ -276,8 +276,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
      */
     function claimMintReward() external {
         MintInfo memory mintInfo = userMints[_msgSender()];
-        require(mintInfo.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "CRank: No mint exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Mint maturity not reached");
 
         // calculate reward and mint tokens
         uint256 rewardAmount = _calculateMintReward(
@@ -302,8 +302,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         require(other != address(0), "CRank: Cannot share with zero address");
         require(pct > 0, "CRank: Cannot share zero percent");
         require(pct < 101, "CRank: Cannot share 100+ percent");
-        require(mintInfo.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "CRank: No mint exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Mint maturity not reached");
 
         // calculate reward
         uint256 rewardAmount = _calculateMintReward(
@@ -332,8 +332,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         MintInfo memory mintInfo = userMints[_msgSender()];
         // require(pct > 0, "CRank: Cannot share zero percent");
         require(pct < 101, "CRank: Cannot share >100 percent");
-        require(mintInfo.rank > 0, "CRank: No stake exists");
-        require(block.timestamp > mintInfo.maturityTs, "CRank: Stake maturity not reached");
+        require(mintInfo.rank > 0, "CRank: No mint exists");
+        require(block.timestamp > mintInfo.maturityTs, "CRank: Mint maturity not reached");
 
         // calculate reward
         uint256 rewardAmount = _calculateMintReward(
@@ -354,8 +354,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         // nothing to burn since we haven't minted this part yet
         // stake extra tokens part
         require(stakedReward > XEN_MIN_STAKE, "XEN: Below min stake");
-        require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min term");
-        require(term * SECONDS_IN_DAY < MAX_TERM_END + 1, "XEN: Above max term");
+        require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min stake term");
+        require(term * SECONDS_IN_DAY < MAX_TERM_END + 1, "XEN: Above max stake term");
         require(userStakes[_msgSender()].amount == 0, "XEN: stake exists");
 
         _createStake(stakedReward, term);
@@ -368,8 +368,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     function stake(uint256 amount, uint256 term) external {
         require(balanceOf(_msgSender()) >= amount, "XEN: not enough balance");
         require(amount > XEN_MIN_STAKE, "XEN: Below min stake");
-        require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min term");
-        require(term * SECONDS_IN_DAY < MAX_TERM_END + 1, "XEN: Above max term");
+        require(term * SECONDS_IN_DAY > MIN_TERM, "XEN: Below min stake term");
+        require(term * SECONDS_IN_DAY < MAX_TERM_END + 1, "XEN: Above max stake term");
         require(userStakes[_msgSender()].amount == 0, "XEN: stake exists");
 
         // burn staked XEN
