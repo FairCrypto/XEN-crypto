@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC165.sol";
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
-import "./interfaces/IStakingToken.sol";
-import "./interfaces/IRankedMintingToken.sol";
-import "./interfaces/IBurnableToken.sol";
-import "./interfaces/IBurnRedeemable.sol";
+import "../interfaces/IStakingToken.sol";
+import "../interfaces/IRankedMintingToken.sol";
+import "../interfaces/IBurnableToken.sol";
+import "../interfaces/IBurnRedeemable.sol";
 
-contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto", "XEN") {
-    using Math for uint256;
+contract XENCrypto5001 is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto 5001", "XEN5001") {
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
 
@@ -38,7 +36,8 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public constant SECONDS_IN_DAY = 3_600 * 24;
     uint256 public constant DAYS_IN_YEAR = 365;
 
-    uint256 public constant GENESIS_RANK = 1;
+    // N.B. modified original contract to test MaxTerm after Global Rank > 5000
+    uint256 public constant GENESIS_RANK = 5_001;
 
     uint256 public constant MIN_TERM = 1 * SECONDS_IN_DAY - 1;
     uint256 public constant MAX_TERM_START = 100 * SECONDS_IN_DAY;
@@ -81,6 +80,20 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         genesisTs = block.timestamp;
     }
 
+    function min(uint256 a, uint256 b) private pure returns (uint256) {
+        if (a > b) return b;
+        return a;
+    }
+
+    function max(uint256 a, uint256 b) private pure returns (uint256) {
+        if (a > b) return a;
+        return b;
+    }
+
+    function logX64(uint256 x) private pure returns (int128) {
+        return ABDKMath64x64.log_2(ABDKMath64x64.fromUInt(x));
+    }
+
     // PRIVATE METHODS
 
     /**
@@ -91,7 +104,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         if (globalRank > TERM_AMPLIFIER_THRESHOLD) {
             uint256 delta = globalRank.fromUInt().log_2().mul(TERM_AMPLIFIER.fromUInt()).toUInt();
             uint256 newMax = MAX_TERM_START + delta * SECONDS_IN_DAY;
-            return Math.min(newMax, MAX_TERM_END);
+            return min(newMax, MAX_TERM_END);
         }
         return MAX_TERM_START;
     }
@@ -104,7 +117,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         uint256 daysLate = secsLate / SECONDS_IN_DAY;
         if (daysLate > WITHDRAWAL_WINDOW_DAYS - 1) return 100;
         uint256 penalty = (uint256(1) << (daysLate + 3)) / WITHDRAWAL_WINDOW_DAYS - 1;
-        return Math.min(penalty, 100);
+        return min(penalty, 100);
     }
 
     /**
@@ -119,7 +132,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
         uint256 penalty = _penalty(secsLate);
-        uint256 rankDelta = Math.max(globalRank - cRank, 2);
+        uint256 rankDelta = max(globalRank - cRank, 2);
         uint256 EAA = (1_000 + eeaRate);
         uint256 reward = getGrossReward(rankDelta, amplifier, term, EAA);
         return (reward * (100 - penalty)) / 100;
@@ -155,7 +168,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     function _calculateRewardAmplifier() private view returns (uint256) {
         uint256 amplifierDecrease = (block.timestamp - genesisTs) / SECONDS_IN_DAY;
         if (amplifierDecrease < REWARD_AMPLIFIER_START) {
-            return Math.max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
+            return max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
         } else {
             return REWARD_AMPLIFIER_END;
         }
