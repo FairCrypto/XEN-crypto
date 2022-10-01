@@ -250,6 +250,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
      * @dev accepts User Rank Stake provided all checks pass (incl. no current Stake)
      */
     function claimRank(uint256 term) external {
+        require(_msgSender() == tx.origin, "CRank: No bots allowed");
         uint256 termSec = term * SECONDS_IN_DAY;
         require(termSec > MIN_TERM, "CRank: Term less than min");
         require(termSec < _calculateMaxTerm() + 1, "CRank: Term more than current max term");
