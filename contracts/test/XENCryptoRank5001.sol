@@ -86,18 +86,14 @@ contract XENCrypto5001 is
         genesisTs = block.timestamp;
     }
 
-    function min(uint256 a, uint256 b) private pure returns (uint256) {
+    function _min(uint256 a, uint256 b) private pure returns (uint256) {
         if (a > b) return b;
         return a;
     }
 
-    function max(uint256 a, uint256 b) private pure returns (uint256) {
+    function _max(uint256 a, uint256 b) private pure returns (uint256) {
         if (a > b) return a;
         return b;
-    }
-
-    function logX64(uint256 x) private pure returns (int128) {
-        return ABDKMath64x64.log_2(ABDKMath64x64.fromUInt(x));
     }
 
     // PRIVATE METHODS
@@ -110,7 +106,7 @@ contract XENCrypto5001 is
         if (globalRank > TERM_AMPLIFIER_THRESHOLD) {
             uint256 delta = globalRank.fromUInt().log_2().mul(TERM_AMPLIFIER.fromUInt()).toUInt();
             uint256 newMax = MAX_TERM_START + delta * SECONDS_IN_DAY;
-            return min(newMax, MAX_TERM_END);
+            return _min(newMax, MAX_TERM_END);
         }
         return MAX_TERM_START;
     }
@@ -123,7 +119,7 @@ contract XENCrypto5001 is
         uint256 daysLate = secsLate / SECONDS_IN_DAY;
         if (daysLate > WITHDRAWAL_WINDOW_DAYS - 1) return 100;
         uint256 penalty = (uint256(1) << (daysLate + 3)) / WITHDRAWAL_WINDOW_DAYS - 1;
-        return min(penalty, 100);
+        return _min(penalty, 100);
     }
 
     /**
@@ -138,7 +134,7 @@ contract XENCrypto5001 is
     ) private view returns (uint256) {
         uint256 secsLate = block.timestamp - maturityTs;
         uint256 penalty = _penalty(secsLate);
-        uint256 rankDelta = max(globalRank - cRank, 2);
+        uint256 rankDelta = _max(globalRank - cRank, 2);
         uint256 EAA = (1_000 + eeaRate);
         uint256 reward = getGrossReward(rankDelta, amplifier, term, EAA);
         return (reward * (100 - penalty)) / 100;
@@ -174,7 +170,7 @@ contract XENCrypto5001 is
     function _calculateRewardAmplifier() private view returns (uint256) {
         uint256 amplifierDecrease = (block.timestamp - genesisTs) / SECONDS_IN_DAY;
         if (amplifierDecrease < REWARD_AMPLIFIER_START) {
-            return max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
+            return _max(REWARD_AMPLIFIER_START - amplifierDecrease, REWARD_AMPLIFIER_END);
         } else {
             return REWARD_AMPLIFIER_END;
         }
