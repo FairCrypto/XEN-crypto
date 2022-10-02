@@ -6,6 +6,13 @@ const truffleAssert = require('truffle-assertions')
 const timeMachine = require('ganache-time-traveler');
 
 const XENCrypto = artifacts.require("XENCrypto")
+// test 'fake' contracts with pre-set GlobalRanks
+const XENCrypto5001 = artifacts.require("XENCrypto5001")
+const XENCrypto100001 = artifacts.require("XENCrypto100001")
+const XENCrypto25mm1 = artifacts.require("XENCrypto25mm1")
+
+require('dotenv').config()
+const print = process.env.EXTRA_PRINT
 
 const { bn2hexStr, toBigInt, maxBigInt, etherToWei } = require('../src/utils.js')
 
@@ -13,6 +20,9 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
     const genesisRank = 1
     let token
+    let tokenWithRank5001
+    let tokenWithRank100001
+    let tokenWithRank25mm1
     let term = 2
     let expectedStakeId = genesisRank
     let snapshotId
@@ -20,16 +30,19 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
     before(async () => {
         try {
             token = await XENCrypto.deployed()
+            tokenWithRank5001 = await XENCrypto5001.new();
+            tokenWithRank100001 = await XENCrypto100001.new();
+            tokenWithRank25mm1 = await XENCrypto25mm1.new();
         } catch (e) {
             console.error(e)
         }
     })
 
-    it("Should start stake IDs (ranks) with number 21", async () => {
+    it("Should start stake IDs (ranks) with number 1", async () => {
         assert.ok(await token.globalRank().then(_ => _.toNumber()) === expectedStakeId)
     })
 
-    it("Should allow to stake with initial ID (rank) having #21", async () => {
+    it("Should allow to stake with initial ID (rank) having #1", async () => {
         await assert.doesNotReject(() => {
             return token.claimRank(term, {from: accounts[1]})
                 .then(result => truffleAssert.eventEmitted(
@@ -49,7 +62,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
         await assert.rejects(() => token.claimRank(term * 2, {from: accounts[1]}));
     })
 
-    it("Should allow to stake with next ID (rank) having #22", async () => {
+    it("Should allow to stake with next ID (rank) having #2", async () => {
        await assert.doesNotReject(() => {
             return token.claimRank(term, {from: accounts[2]})
                 .then(result => truffleAssert.eventEmitted(
@@ -168,6 +181,10 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
             token.claimRank(101, {from: accounts[1]}),
             "CRank: Term more than current max term"
         )
+    })
+
+    it("On having Global Rank 5001 Should allow to claim rank with term less or equal of 284", async () => {
+        await  assert.doesNotReject(tokenWithRank5001.claimRank(284, {from: accounts[1]}))
     })
 
     it("Should allow to withdraw stake upon maturity with XEN minted", async () => {
