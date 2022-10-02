@@ -9,7 +9,13 @@ import "../interfaces/IRankedMintingToken.sol";
 import "../interfaces/IBurnableToken.sol";
 import "../interfaces/IBurnRedeemable.sol";
 
-contract XENCrypto25mm1 is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto 25mm", "XEN25MM") {
+contract XENCrypto25mm1 is
+    Context,
+    IRankedMintingToken,
+    IStakingToken,
+    IBurnableToken,
+    ERC20("XEN Crypto 25mm", "XEN25MM")
+{
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
 
