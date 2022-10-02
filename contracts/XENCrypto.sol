@@ -245,6 +245,13 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         return _calculateAPY();
     }
 
+    /**
+     * @dev returns current Max Term
+     */
+    function getCurrentMaxTerm() external view returns (uint256) {
+        return _calculateMaxTerm();
+    }
+
     // PUBLIC STATE-CHANGING METHODS
 
     /**
