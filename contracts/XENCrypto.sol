@@ -85,7 +85,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
 
     /**
      * @dev calculates current MaxTerm based on Global Rank
-     *      (if GlobalTank crosses over TERM_AMPLIFIER_THRESHOLD)
+     *      (if Global Rank crosses over TERM_AMPLIFIER_THRESHOLD)
      */
     function _calculateMaxTerm() private view returns (uint256) {
         if (globalRank > TERM_AMPLIFIER_THRESHOLD) {
