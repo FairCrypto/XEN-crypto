@@ -247,7 +247,7 @@ contract("XEN Crypto (Rank amd XEN Claiming)", async accounts => {
 
     it ("Shall progressively decrease reward amount for delay in 1...8 days", async () => {
         const delaysInDays = [1, 2, 3, 4, 5, 6, 7, 8];
-        const expectedRewardPct = [99n, 97n, 92n, 83n, 65n, 28n, 0n, 0n];
+        const expectedRewardPct = [99n, 97n, 92n, 83n, 65n, 28n, 1n, 1n];
         for await (const delay of delaysInDays) {
             await timeMachine.revertToSnapshot(snapshotId);
             const snapshot = await timeMachine.takeSnapshot();

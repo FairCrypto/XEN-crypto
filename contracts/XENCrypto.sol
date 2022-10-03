@@ -51,6 +51,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public constant EAA_PM_STEP = 1;
     uint256 public constant EAA_RANK_STEP = 100_000;
     uint256 public constant WITHDRAWAL_WINDOW_DAYS = 7;
+    uint256 public constant MAX_PENALTY_PCT = 99;
 
     uint256 public constant XEN_MIN_STAKE = 0;
 
@@ -100,11 +101,11 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
      * @dev calculates Withdrawal Penalty depending on lateness
      */
     function _penalty(uint256 secsLate) private pure returns (uint256) {
-        // =MIN(2^(daysLate+3)/window-1,100)
+        // =MIN(2^(daysLate+3)/window-1,99)
         uint256 daysLate = secsLate / SECONDS_IN_DAY;
-        if (daysLate > WITHDRAWAL_WINDOW_DAYS - 1) return 100;
+        if (daysLate > WITHDRAWAL_WINDOW_DAYS - 1) return MAX_PENALTY_PCT;
         uint256 penalty = (uint256(1) << (daysLate + 3)) / WITHDRAWAL_WINDOW_DAYS - 1;
-        return Math.min(penalty, 100);
+        return Math.min(penalty, MAX_PENALTY_PCT);
     }
 
     /**
