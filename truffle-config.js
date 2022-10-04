@@ -6,6 +6,9 @@ const infuraKey = process.env.INFURA_KEY || ''
 const infuraSecret = process.env.INFURA_SECRET || ''
 const liveNetworkPK = process.env.LIVE_PK || ''
 const privKeysRinkeby = [ liveNetworkPK ]
+const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
+const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
+const bscApiKey = process.env.BSC_SCAN_API_KEY || ''
 
 module.exports = {
   networks: {
@@ -115,5 +118,11 @@ module.exports = {
   },
   db: {
     enabled: false
+  },
+  plugins: ['truffle-plugin-verify'],
+  api_keys: {
+    etherscan: etherscanApiKey,
+    bscscan: bscApiKey,
+    polygonscan: polygonApiKey
   }
 };

@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
-    "abdk-libraries-solidity": "^3.0.0"
+    "abdk-libraries-solidity": "^3.0.0",
+    "truffle-plugin-verify": "^0.5.28"
   },
   "files": [
     "/build/contracts/*.json",
