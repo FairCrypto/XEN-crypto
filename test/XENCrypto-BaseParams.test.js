@@ -231,8 +231,8 @@ contract("XEN Crypto (Base Params)", async accounts => {
 
     it("Should correctly calculate gross mint reward", async () => {
         // (uint256 rankDelta, uint256 amplifier, uint256 term, uint256 EAA)
-        const term = 1
-        const delta = 2
+        const term = 30
+        const delta = 1_000
         const eaa = Math.floor((1 + (expectedInitialEEAR / 1_000)) * 1000)
         const reward = await token.getGrossReward(delta, expectedInitialAMP, term, eaa).then(_ => _.toNumber())
         const expectedReward =

@@ -15,7 +15,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
 
-    // INTERNAL TYPE TO DESCRIBE A RANK STAKE
+    // INTERNAL TYPE TO DESCRIBE A XEN MINT INFO
     struct MintInfo {
         address user;
         uint256 term;
@@ -127,9 +127,9 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     }
 
     /**
-     * @dev cleans up Stake storage (gets some Gas credit;))
+     * @dev cleans up User Mint storage (gets some Gas credit;))
      */
-    function _cleanUpStake() private {
+    function _cleanUpUserMint() private {
         delete userMints[_msgSender()];
         activeMinters--;
     }
@@ -182,7 +182,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     }
 
     /**
-     * @dev calculates Reward Amplifier
+     * @dev creates User Stake
      */
     function _createStake(uint256 amount, uint256 term) private {
         userStakes[_msgSender()] = StakeInfo({
@@ -212,7 +212,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     }
 
     /**
-     * @dev returns Rank Stake object associated with User account address
+     * @dev returns User Mint object associated with User account address
      */
     function getUserMint() external view returns (MintInfo memory) {
         return userMints[_msgSender()];
@@ -247,7 +247,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     }
 
     /**
-     * @dev returns current Max Term
+     * @dev returns current MaxTerm
      */
     function getCurrentMaxTerm() external view returns (uint256) {
         return _calculateMaxTerm();
@@ -256,7 +256,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     // PUBLIC STATE-CHANGING METHODS
 
     /**
-     * @dev accepts User Rank Stake provided all checks pass (incl. no current Stake)
+     * @dev accepts User cRank claim provided all checks pass (incl. no current claim exists)
      */
     function claimRank(uint256 term) external {
         uint256 termSec = term * SECONDS_IN_DAY;
@@ -296,12 +296,12 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         ) * 1 ether;
         _mint(_msgSender(), rewardAmount);
 
-        _cleanUpStake();
+        _cleanUpUserMint();
         emit MintClaimed(_msgSender(), rewardAmount);
     }
 
     /**
-     * @dev  ends Rank Stake upon maturity (and within permitted Withdrawal time Window)
+     * @dev  ends minting upon maturity (and within permitted Withdrawal time Window)
      *       mints XEN coins and splits them between User and designated other address
      */
     function claimMintRewardAndShare(address other, uint256 pct) external {
@@ -327,12 +327,12 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
         _mint(_msgSender(), ownReward);
         _mint(other, sharedReward);
 
-        _cleanUpStake();
+        _cleanUpUserMint();
         emit MintClaimed(_msgSender(), rewardAmount);
     }
 
     /**
-     * @dev  ends Rank Stake upon maturity (and within permitted Withdrawal time Window)
+     * @dev  ends minting upon maturity (and within permitted Withdrawal time Window)
      *       mints XEN coins and stakes 'pct' of it for 'term'
      */
     function claimMintRewardAndStake(uint256 pct, uint256 term) external {
@@ -355,7 +355,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
 
         // mint reward tokens part
         _mint(_msgSender(), ownReward);
-        _cleanUpStake();
+        _cleanUpUserMint();
         emit MintClaimed(_msgSender(), rewardAmount);
 
         // nothing to burn since we haven't minted this part yet
