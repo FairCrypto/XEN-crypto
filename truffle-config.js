@@ -18,6 +18,21 @@ module.exports = {
       network_id: "222222222",
       websocket: true
     },
+    mainnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: [process.env.PK_MAIN],
+        providerOrUrl: `https://mainnet.infura.io/v3/${infuraKey}`,
+      }),
+      network_id: 1,
+      maxFeePerGas: 20_000_000_000,
+      maxPriorityFeePerGas: 2_000_000_000,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      pollingInterval: 1000,
+      gasLimit: 3_000_000,
+      skipDryRun: true,
+      //websockets: true
+    },
     rinkeby: {
       provider: () => new HDWalletProvider({
         privateKeys: privKeysRinkeby,
