@@ -5,7 +5,7 @@ dotenv.config()
 const infuraKey = process.env.INFURA_KEY || ''
 const infuraSecret = process.env.INFURA_SECRET || ''
 const liveNetworkPK = process.env.LIVE_PK || ''
-const privKeysRinkeby = [ liveNetworkPK ]
+const privKeyTestnet = [ liveNetworkPK ]
 const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
 const bscApiKey = process.env.BSC_SCAN_API_KEY || ''
@@ -20,7 +20,7 @@ module.exports = {
     },
     rinkeby: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         //providerOrUrl: `https://:${infuraSecret}@rinkeby.infura.io/v3/${infuraKey}`,
         providerOrUrl: `wss://:${infuraSecret}@rinkeby.infura.io/ws/v3/${infuraKey}`,
         pollingInterval: 56000
@@ -34,7 +34,7 @@ module.exports = {
     },
     goerli: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         //providerOrUrl: `https://:${infuraSecret}@goerli.infura.io/v3/${infuraKey}`,
         providerOrUrl: `wss://:${infuraSecret}@goerli.infura.io/ws/v3/${infuraKey}`,
         pollingInterval: 56000
@@ -48,7 +48,7 @@ module.exports = {
     },
     bsc_testnet: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         providerOrUrl: `https://data-seed-prebsc-1-s1.binance.org:8545`,
         pollingInterval: 56000
       }),
@@ -61,7 +61,7 @@ module.exports = {
     },
     pulsechain_testnet: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         providerOrUrl: `https://rpc.v2b.testnet.pulsechain.com`,
         pollingInterval: 56000
       }),
@@ -74,7 +74,7 @@ module.exports = {
     },
     ethw_testnet: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         providerOrUrl: `https://iceberg.ethereumpow.org/`,
         pollingInterval: 56000
       }),
@@ -87,7 +87,7 @@ module.exports = {
     },
     mumbai: {
       provider: () => new HDWalletProvider({
-        privateKeys: privKeysRinkeby,
+        privateKeys: privKeyTestnet,
         providerOrUrl: `https://rpc-mumbai.maticvigil.com/v1/53a113316e0a9e20bcf02b13dd504ac33aeea3ba`,
         pollingInterval: 56000
       }),
@@ -100,7 +100,34 @@ module.exports = {
       networkCheckTimeout: 999999
       //websockets: true
     },
+    moonbase: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeyTestnet,
+        providerOrUrl: `https://rpc.api.moonbase.moonbeam.network`,
+        //pollingInterval: 56000
+      }),
+      network_id: 1287,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
+    'evmos-testnet': {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeyTestnet,
+        providerOrUrl: `https://jsonrpc-t.evmos.nodestake.top`,
+        //pollingInterval: 56000
+      }),
+      network_id: 9000,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
   },
+
   mocha: {
     timeout: 100_000
   },
