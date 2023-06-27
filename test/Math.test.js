@@ -3,7 +3,7 @@
 const assert = require('assert')
 const crypto = require('crypto')
 
-const XMath = artifacts.require("Math")
+const XMath = artifacts.require("XENMath")
 
 const bn2hexStr = (bn) => '0x' + (bn?.toString(16)?.padStart(64, '0') || '0')
 

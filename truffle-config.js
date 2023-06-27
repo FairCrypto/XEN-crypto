@@ -100,6 +100,36 @@ module.exports = {
       networkCheckTimeout: 999999
       //websockets: true
     },
+    x1: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        //privateKeys: [process.env.PK_X1],
+        providerOrUrl: `https://x1-devnet.xen.network`,
+        pollingInterval: 5_000
+      }),
+      network_id: 202212,       // Custom network
+      gas: 10_000_000,
+      gasPrice: 110_000_000_000
+      // gas: 8500000,           // Gas sent with each transaction (default: ~6700000)
+      // gasPrice: 20000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      // from: DEPLOYER_ADDRESS_X1,        // Account to send transactions from (default: accounts[0])
+      // websocket: true         // Enable EventEmitter interface for web3 (default: false)
+    },
+    fastnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        //privateKeys: [process.env.PK_X1],
+        providerOrUrl: `https://x1-fastnet.infrafc.org`,
+        pollingInterval: 5_000
+      }),
+      network_id: 4003,       // Custom network
+      gas: 30_000_000,
+      // gasPrice: 110_000_000_000
+      // gas: 8500000,           // Gas sent with each transaction (default: ~6700000)
+      // gasPrice: 20000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      // from: DEPLOYER_ADDRESS_X1,        // Account to send transactions from (default: accounts[0])
+      // websocket: true         // Enable EventEmitter interface for web3 (default: false)
+    },
   },
   mocha: {
     timeout: 100_000
