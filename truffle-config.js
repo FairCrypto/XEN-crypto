@@ -6,6 +6,7 @@ const infuraKey = process.env.INFURA_KEY || ''
 const infuraSecret = process.env.INFURA_SECRET || ''
 const liveNetworkPK = process.env.LIVE_PK || ''
 const privKeysRinkeby = [ liveNetworkPK ]
+const privKeysLocal = [ process.env.PK || '' ]
 const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
 const bscApiKey = process.env.BSC_SCAN_API_KEY || ''
@@ -99,6 +100,55 @@ module.exports = {
       from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
       networkCheckTimeout: 999999
       //websockets: true
+    },
+    x1: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        //privateKeys: [process.env.PK_X1],
+        providerOrUrl: `https://x1-devnet.xen.network`,
+        pollingInterval: 5_000
+      }),
+      network_id: 202212,       // Custom network
+      gas: 10_000_000,
+      gasPrice: 110_000_000_000
+      // gas: 8500000,           // Gas sent with each transaction (default: ~6700000)
+      // gasPrice: 20000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      // from: DEPLOYER_ADDRESS_X1,        // Account to send transactions from (default: accounts[0])
+      // websocket: true         // Enable EventEmitter interface for web3 (default: false)
+    },
+    fastnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        //privateKeys: [process.env.PK_X1],
+        providerOrUrl: `https://x1-fastnet.infrafc.org`,
+        pollingInterval: 5_000
+      }),
+      network_id: 4003,       // Custom network
+      gas: 30_000_000,
+      // gasPrice: 110_000_000_000
+      // gas: 8500000,           // Gas sent with each transaction (default: ~6700000)
+      // gasPrice: 20000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      // from: DEPLOYER_ADDRESS_X1,        // Account to send transactions from (default: accounts[0])
+      // websocket: true         // Enable EventEmitter interface for web3 (default: false)
+    },
+    leo: {
+      provider: () => new HDWalletProvider({
+        //privateKeys: [process.env.PK_FTM],
+        //privateKeys: [process.env.PK_X1],
+        privateKeys: [process.env.PK],
+        providerOrUrl: `https://x1-leotestnet.infrafc.org`,
+        // providerOrUrl: `http://localhost:8080`,
+        pollingInterval: 5_000
+      }),
+      network_id: 4003,       // Custom network
+      // gasLimit: 2_600_000,
+      // gasPrice: 500_000_000_000
+      // maxFeePerGas: 500_000_000_000,
+      // maxPriorityFeePerGas: 2_000_000_000
+      // gas: 8500000,           // Gas sent with each transaction (default: ~6700000)
+      // gasPrice: 20000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      // from: DEPLOYER_ADDRESS_X1,        // Account to send transactions from (default: accounts[0])
+      // websocket: true         // Enable EventEmitter interface for web3 (default: false)
     },
   },
   mocha: {
