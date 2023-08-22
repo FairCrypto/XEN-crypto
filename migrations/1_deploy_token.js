@@ -1,8 +1,8 @@
 const XENCrypto = artifacts.require("XENCrypto");
-const Math = artifacts.require("Math");
+const XENMath = artifacts.require("XENMath");
 
 module.exports = async function (deployer) {
-  await deployer.deploy(Math);
-  await deployer.link(Math, XENCrypto);
+  await deployer.deploy(XENMath);
+  await deployer.link(XENMath, XENCrypto);
   await deployer.deploy(XENCrypto);
 };
