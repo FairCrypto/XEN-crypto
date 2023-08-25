@@ -6,6 +6,7 @@ const infuraKey = process.env.INFURA_KEY || ''
 const infuraSecret = process.env.INFURA_SECRET || ''
 const liveNetworkPK = process.env.LIVE_PK || ''
 const privKeysRinkeby = [ liveNetworkPK ]
+const privKeysBase = [ process.env.PK_BASE ]
 const privKeysLocal = [ process.env.PK || '' ]
 const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
@@ -41,6 +42,34 @@ module.exports = {
         pollingInterval: 56000
       }),
       network_id: 5,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
+    base: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysBase,
+        providerOrUrl: `https://base.org`,
+        // providerOrUrl: `wss://:${infuraSecret}@goerli.infura.io/ws/v3/${infuraKey}`,
+        pollingInterval: 56000
+      }),
+      network_id: 8453,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      // from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
+    base_testnet: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://goerli.base.org`,
+        // providerOrUrl: `wss://:${infuraSecret}@goerli.infura.io/ws/v3/${infuraKey}`,
+        pollingInterval: 56000
+      }),
+      network_id: 84531,
       confirmations: 2,
       timeoutBlocks: 100,
       skipDryRun: true,
