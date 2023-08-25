@@ -4,7 +4,7 @@ const assert = require('assert')
 const crypto = require('crypto')
 const { parseFixed, formatFixed, FixedNumber, FixedFormat} = require('@ethersproject/bignumber')
 
-const XMath = artifacts.require("Math")
+const XMath = artifacts.require("XENMath")
 
 const { bn64x64ToFloat } = require("../src/utils");
 
