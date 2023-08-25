@@ -28,3 +28,7 @@ nohup.out
 
 coverage.json
 coverage/
+/test/.sim.test.js
+/test/.sim2.test.js
+/run-ganache.sh
+/stop-ganache.sh
