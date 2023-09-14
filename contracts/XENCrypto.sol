@@ -10,7 +10,7 @@ import "./interfaces/IRankedMintingToken.sol";
 import "./interfaces/IBurnableToken.sol";
 import "./interfaces/IBurnRedeemable.sol";
 
-contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto", "XEN") {
+contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToken, ERC20("XEN Crypto", "opXEN") {
     using XENMath for uint256;
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
@@ -45,7 +45,7 @@ contract XENCrypto is Context, IRankedMintingToken, IStakingToken, IBurnableToke
     uint256 public constant MAX_TERM_END = 1_000 * SECONDS_IN_DAY;
     uint256 public constant TERM_AMPLIFIER = 15;
     uint256 public constant TERM_AMPLIFIER_THRESHOLD = 5_000;
-    uint256 public constant REWARD_AMPLIFIER_START = 3_000;
+    uint256 public constant REWARD_AMPLIFIER_START = 300; /* OP-300 */
     uint256 public constant REWARD_AMPLIFIER_END = 1;
     uint256 public constant EAA_PM_START = 100;
     uint256 public constant EAA_PM_STEP = 1;
