@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
       allowUnlimitedContractSize: true,
     },
     sepolia: {
-      url: "https://sepolia.infura.io/v3/c49e0aea3e654d2a8d02ce82db123438",
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_KEY || ""}`,
       accounts: [ process.env.LIVE_PK || "" ]
     }
   },
